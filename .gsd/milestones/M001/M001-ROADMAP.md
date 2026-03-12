@@ -60,7 +60,7 @@ This milestone is complete only when all are true:
 - [x] **S01: OCR Engine + Quality Benchmarks** `risk:high` `depends:[]`
   > After this: a Python script takes an image, OCRs it with PaddleOCR, produces a searchable PDF, and CER/WER are measured against ground truth fixtures.
 
-- [ ] **S02: Tauri Shell + Python Sidecar** `risk:high` `depends:[S01]`
+- [x] **S02: Tauri Shell + Python Sidecar** `risk:high` `depends:[S01]`
   > After this: launching the Tauri app spawns the Python sidecar, and a hello-world JSON exchange proves bidirectional communication.
 
 - [ ] **S03: Drop-and-Go Pipeline** `risk:medium` `depends:[S01,S02]`
