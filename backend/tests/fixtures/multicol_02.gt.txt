@@ -1,0 +1,8 @@
+The first column contains text
+The second column mirrors the
+that flows naturally from top
+layout of the first column.
+to bottom like a newspaper.
+This tests multi-column OCR
+Each line is a separate phrase.
+reading order detection.

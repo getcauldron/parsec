@@ -1,0 +1,1 @@
+Noisy backgrounds simulate real world scanning conditions. Dust and grain affect character segmentation quality.

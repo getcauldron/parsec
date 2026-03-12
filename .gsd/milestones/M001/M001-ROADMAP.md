@@ -57,7 +57,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: OCR Engine + Quality Benchmarks** `risk:high` `depends:[]`
+- [x] **S01: OCR Engine + Quality Benchmarks** `risk:high` `depends:[]`
   > After this: a Python script takes an image, OCRs it with PaddleOCR, produces a searchable PDF, and CER/WER are measured against ground truth fixtures.
 
 - [ ] **S02: Tauri Shell + Python Sidecar** `risk:high` `depends:[S01]`

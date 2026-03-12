@@ -1,0 +1,11 @@
+pyproject.toml
+parsec/__init__.py
+parsec/engine.py
+parsec/models.py
+parsec/paddle_engine.py
+parsec.egg-info/PKG-INFO
+parsec.egg-info/SOURCES.txt
+parsec.egg-info/dependency_links.txt
+parsec.egg-info/requires.txt
+parsec.egg-info/top_level.txt
+tests/test_engine.py

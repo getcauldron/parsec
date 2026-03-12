@@ -1,0 +1,1 @@
+"""Parsec — Document OCR pipeline."""

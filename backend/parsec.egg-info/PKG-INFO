@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: parsec
+Version: 0.1.0
+Summary: Document OCR pipeline — PaddleOCR engine with searchable PDF output
+Requires-Python: >=3.10
+Requires-Dist: paddlepaddle>=3.0.0
+Requires-Dist: paddleocr>=3.0.0
+Requires-Dist: ocrmypdf>=17.0.0
+Requires-Dist: jiwer>=3.0.0
+Requires-Dist: pillow>=10.0.0
+Requires-Dist: pdfminer.six
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"

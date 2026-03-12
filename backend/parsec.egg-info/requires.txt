@@ -1,0 +1,9 @@
+paddlepaddle>=3.0.0
+paddleocr>=3.0.0
+ocrmypdf>=17.0.0
+jiwer>=3.0.0
+pillow>=10.0.0
+pdfminer.six
+
+[dev]
+pytest>=8.0.0

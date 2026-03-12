@@ -1,0 +1,1 @@
+Slightly tilted text tests the robustness of OCR engines. Even a small rotation can challenge recognition accuracy.
