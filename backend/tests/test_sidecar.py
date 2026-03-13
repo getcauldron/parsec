@@ -9,11 +9,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import textwrap
-import time
 from pathlib import Path
-
-import pytest
 
 SIDECAR_MODULE = "parsec.sidecar"
 BACKEND_DIR = Path(__file__).resolve().parent.parent

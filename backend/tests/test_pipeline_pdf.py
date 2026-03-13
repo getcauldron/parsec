@@ -9,14 +9,13 @@ Covers:
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from pdfminer.high_level import extract_text
 
-from parsec.models import OcrOptions, ProcessResult
+from parsec.models import OcrOptions
 from parsec.pipeline import process_file
 
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"

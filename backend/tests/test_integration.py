@@ -15,16 +15,13 @@ import sys
 from pathlib import Path
 
 import jiwer
-import pytest
 from pdfminer.high_level import extract_text
 
 from parsec.models import OcrOptions
 from parsec.pipeline import process_file
 from tests.conftest import FIXTURE_DIR, load_ground_truth
 from tests.test_quality import (
-    QualityResult,
     _CER_TRANSFORMS,
-    _WER_TRANSFORMS,
     measure_quality,
 )
 

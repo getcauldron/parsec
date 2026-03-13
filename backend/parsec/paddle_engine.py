@@ -7,7 +7,6 @@ penalty until inference is actually needed (~4s model load).
 from __future__ import annotations
 
 import contextlib
-import io
 import logging
 import os
 import time
@@ -139,7 +138,8 @@ class PaddleOcrEngine(OcrEngine):
                 score = float(rec_scores[i]) if rec_scores is not None and i < len(rec_scores) else 0.0
 
                 # Convert polygon to axis-aligned bounding box (x1, y1, x2, y2)
-                bbox = self._poly_to_bbox(dt_polys[i]) if dt_polys is not None and i < len(dt_polys) else (0.0, 0.0, 0.0, 0.0)
+                has_poly = dt_polys is not None and i < len(dt_polys)
+                bbox = self._poly_to_bbox(dt_polys[i]) if has_poly else (0.0, 0.0, 0.0, 0.0)
 
                 regions.append(TextRegion(text=text, bbox=bbox, confidence=score))
 

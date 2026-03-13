@@ -12,16 +12,15 @@ for tests without PyInstaller-specific hacks.
 # === STDOUT MUST BE LINE-BUFFERED BEFORE ANYTHING ELSE ===
 # PyInstaller binaries fully buffer stdout when spawned from a parent process.
 # This breaks the NDJSON sidecar protocol — the parent gets nothing until exit.
-import sys
 import io
+import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, line_buffering=True)
 
 # === SUPPRESS PADDLEOCR C++ NOISE ===
 # PaddleOCR and PaddlePaddle dump noisy C++ output to stdout/stderr during
 # import. This would corrupt the JSON protocol if it lands on stdout.
-import os
-import contextlib
+import os  # noqa: E402
 
 # Set env vars that suppress various paddle/MKL noise before importing anything
 os.environ["GLOG_minloglevel"] = "3"  # Suppress glog (paddle's C++ logger)
@@ -38,8 +37,8 @@ os.environ["MKL_THREADING_LAYER"] = "GNU"
 def _patch_paddlex_offline():
     """Monkey-patch PaddleX _ModelManager to check local cache before requiring network."""
     try:
+
         from paddlex.inference.utils import official_models
-        from pathlib import Path
 
         original_get = official_models._ModelManager._get_model_local_path
 
@@ -62,7 +61,7 @@ def _patch_paddlex_offline():
 _patch_paddlex_offline()
 
 # Now import and run the sidecar
-from parsec.sidecar import main
+from parsec.sidecar import main  # noqa: E402
 
 if __name__ == "__main__":
     main()

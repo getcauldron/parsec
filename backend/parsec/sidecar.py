@@ -27,14 +27,12 @@ import sys
 
 sys.stdout.reconfigure(line_buffering=True)
 
-import contextlib
-import io
-import json
-import logging
-import os
-import signal
-import time
-from pathlib import Path
+import json  # noqa: E402
+import logging  # noqa: E402
+import os  # noqa: E402
+import signal  # noqa: E402
+import time  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 VERSION = "0.1.0"
 
@@ -193,8 +191,8 @@ def _handle_process_file(
 
     # --- Run the pipeline with stdout protection ---
     try:
-        from parsec.pipeline import process_file as run_pipeline
         from parsec.models import OcrOptions
+        from parsec.pipeline import process_file as run_pipeline
 
         ocr_options = OcrOptions(
             language=language,

@@ -12,8 +12,6 @@ Run: cd backend && python tests/fixtures/generate_fixtures.py
 
 from __future__ import annotations
 
-import math
-import random
 from pathlib import Path
 
 import numpy as np

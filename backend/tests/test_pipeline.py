@@ -9,12 +9,11 @@ OCRmyPDF uses multiprocessing internally.
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
-from PIL import Image, ImageDraw, ImageFont
 from pdfminer.high_level import extract_text
+from PIL import Image, ImageDraw, ImageFont
 
 from parsec.models import OcrOptions, ProcessResult
 from parsec.pipeline import process_file

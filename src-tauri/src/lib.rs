@@ -74,6 +74,7 @@ async fn get_languages(app: tauri::AppHandle) -> Result<Value, String> {
 ///
 /// Progress event shape: `{"type":"progress","id":"...","stage":"queued|initializing|processing|complete|error",...}`
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 async fn process_files(
     app: tauri::AppHandle,
     paths: Vec<String>,
@@ -234,7 +235,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![greet_sidecar, get_languages, process_files])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
-                sidecar::kill_sidecar(&window.app_handle());
+                sidecar::kill_sidecar(window.app_handle());
             }
         })
         .run(tauri::generate_context!())
