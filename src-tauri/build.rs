@@ -1,33 +1,59 @@
 fn main() {
-    tauri_build::build();
-
-    // Ensure the sidecar binary is available with the target-triple suffix in
-    // the output directory. `tauri_build::build()` copies the sidecar as just
-    // `parsec-sidecar`, but at runtime `ShellExt::sidecar()` looks for
-    // `parsec-sidecar-{target_triple}`. Bridge the gap by copying (or symlinking).
+    // Before tauri_build::build() runs, ensure the correct sidecar binary
+    // is in binaries/ with the target-triple suffix.
+    //
+    // Release builds (cargo tauri build): copy the real PyInstaller binary
+    // so Tauri bundles the actual executable with _internal/.
+    //
+    // Dev builds (cargo tauri dev): leave the shell wrapper in place — it
+    // resolves to the PyInstaller output or falls back to venv Python.
     let target_triple = std::env::var("TARGET").unwrap();
-    let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    // OUT_DIR is deep inside target/debug/build/parsec-xxx/out
-    // Walk up to find target/debug/
-    let mut target_debug = out_dir.clone();
-    while target_debug.file_name().map(|n| n != "debug" && n != "release").unwrap_or(false) {
-        target_debug = target_debug.parent().unwrap().to_path_buf();
-    }
+    let profile = std::env::var("PROFILE").unwrap_or_default();
+    let manifest_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+    let binaries_dir = manifest_dir.join("binaries");
 
-    let src = target_debug.join("parsec-sidecar");
-    let dst = target_debug.join(format!("parsec-sidecar-{target_triple}"));
+    let pyinstaller_binary = manifest_dir
+        .parent()
+        .unwrap()
+        .join("backend/dist/parsec-sidecar/parsec-sidecar");
 
-    if src.exists() && !dst.exists() {
-        std::fs::copy(&src, &dst).ok();
-        // Preserve executable permission
+    let sidecar_with_triple =
+        binaries_dir.join(format!("parsec-sidecar-{target_triple}"));
+
+    if profile == "release" && pyinstaller_binary.exists() {
+        // Production build: copy the real PyInstaller binary
+        println!(
+            "cargo:warning=Bundling PyInstaller binary: {}",
+            pyinstaller_binary.display()
+        );
+        std::fs::copy(&pyinstaller_binary, &sidecar_with_triple)
+            .expect("Failed to copy PyInstaller binary to binaries/");
+
+        // Ensure executable permission
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            if let Ok(metadata) = std::fs::metadata(&dst) {
+            if let Ok(metadata) = std::fs::metadata(&sidecar_with_triple) {
                 let mut perms = metadata.permissions();
                 perms.set_mode(0o755);
-                std::fs::set_permissions(&dst, perms).ok();
+                std::fs::set_permissions(&sidecar_with_triple, perms).ok();
             }
         }
+    } else if profile == "release" && !pyinstaller_binary.exists() {
+        println!(
+            "cargo:warning=PyInstaller binary not found at {}. Run ./backend/build_sidecar.sh first.",
+            pyinstaller_binary.display()
+        );
     }
+    // Dev mode: do nothing — the committed shell wrapper is already named
+    // parsec-sidecar-aarch64-apple-darwin and works as-is.
+
+    // Tell Cargo to re-run if the PyInstaller binary or binaries dir changes
+    println!(
+        "cargo:rerun-if-changed={}",
+        pyinstaller_binary.display()
+    );
+    println!("cargo:rerun-if-changed=binaries/");
+
+    tauri_build::build();
 }

@@ -30,6 +30,37 @@ os.environ["PADDLE_LOG_LEVEL"] = "ERROR"
 os.environ["KMP_WARNINGS"] = "0"  # Suppress OpenMP warnings
 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
+# === PADDLEX OFFLINE MODEL PATCH ===
+# PaddleX 3.x requires network health checks before loading models, even when
+# they're already cached locally (a design limitation). In a PyInstaller bundle,
+# the HTTPS health checks may fail due to SSL/cert resolution differences.
+# This patch allows PaddleX to use locally cached models without network access.
+def _patch_paddlex_offline():
+    """Monkey-patch PaddleX _ModelManager to check local cache before requiring network."""
+    try:
+        from paddlex.inference.utils import official_models
+        from pathlib import Path
+
+        original_get = official_models._ModelManager._get_model_local_path
+
+        def _get_model_local_path_offline(self, model_name):
+            # Check local cache first — if models exist on disk, use them directly
+            model_dir = self._save_dir / f"{model_name}"
+            if model_dir.exists():
+                import logging
+                logging.getLogger("paddlex").info(
+                    "Using cached model (offline): %s", model_dir
+                )
+                return model_dir
+            # Fall back to original behavior (requires network)
+            return original_get(self, model_name)
+
+        official_models._ModelManager._get_model_local_path = _get_model_local_path_offline
+    except Exception:
+        pass  # If paddlex isn't available, skip silently
+
+_patch_paddlex_offline()
+
 # Now import and run the sidecar
 from parsec.sidecar import main
 

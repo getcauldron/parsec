@@ -36,6 +36,7 @@ $VENV_PYTHON -m PyInstaller \
   --collect-all imgaug \
   --collect-all lmdb \
   --collect-data paddle \
+  --collect-data paddlex \
   --collect-data scipy \
   --collect-data shapely \
   --hidden-import PIL \
@@ -52,6 +53,11 @@ $VENV_PYTHON -m PyInstaller \
   --hidden-import requests \
   --hidden-import tqdm \
   --hidden-import packaging \
+  --copy-metadata imagesize \
+  --copy-metadata opencv-contrib-python \
+  --copy-metadata pyclipper \
+  --copy-metadata pypdfium2 \
+  --copy-metadata shapely \
   --hidden-import parsec.sidecar \
   --hidden-import parsec.paddle_engine \
   --hidden-import parsec.engine \

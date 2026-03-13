@@ -6,7 +6,7 @@
 
 - A macOS DMG built from `cargo tauri build` installs cleanly, launches the app, and processes a file to searchable PDF — with the PyInstaller sidecar bundled inside
 - The Tauri updater plugin is wired up with signing keypair and endpoint config, so when M003 publishes releases with `latest.json`, existing installations will detect and install updates
-- The UI has smooth transitions, refined hover states, and a completion summary — noticeably more polished than the M001 output
+- The UI is rethemed to match Parsec's icon identity — black/off-white/emerald-green palette, new geometric typography, white processing accents, green completion states, icon in header, and all bundle icons regenerated
 
 ## Key Risks / Unknowns
 
@@ -23,7 +23,7 @@
 - Contract verification: `cargo tauri build` succeeds, DMG mounts, app launches, sidecar spawns, file processes
 - Integration verification: Installed app (not dev mode) processes files end-to-end; updater `check()` call completes
 - Operational verification: Clean install from DMG → process file → verify output; updater detects "no update available" gracefully
-- UAT / human verification: Visual polish assessment — transitions, hover states, and completion states feel finished
+- UAT / human verification: Visual identity assessment — UI palette, typography, and icon match Parsec brand; transitions and states feel finished
 
 ## Milestone Definition of Done
 
@@ -32,7 +32,7 @@ This milestone is complete only when all are true:
 - macOS DMG installs cleanly and the app processes files to searchable PDF from the installed binary
 - PyInstaller sidecar binary + `_internal/` folder are bundled inside the app and spawn correctly
 - Updater plugin is configured with signing keypair and endpoint, and `check()` runs without error
-- UI has smooth transitions, refined interactions, and completion summary
+- UI is rethemed to match icon identity with new palette, typography, and bundle icons
 - All changes verified against the installed app, not just `cargo tauri dev`
 
 ## Requirement Coverage
@@ -40,17 +40,17 @@ This milestone is complete only when all are true:
 - Covers: R013 (downloadable installer — macOS DMG proven, Windows/Linux deferred to M003 CI)
 - Partially covers: R010 (cross-platform — macOS proven, Windows/Linux verification deferred to M003)
 - Leaves for later: R017, R018, R019, R020 (already deferred)
-- New capability (no existing requirement): Auto-update client wiring, UX polish
+- New capability (no existing requirement): Auto-update client wiring, visual identity retheme (icon-driven palette, typography, bundle icons)
 - Orphan risks: none
 
 ## Slices
 
-- [ ] **S01: Sidecar Bundling & macOS Installer** `risk:high` `depends:[]`
+- [x] **S01: Sidecar Bundling & macOS Installer** `risk:high` `depends:[]`
   > After this: `cargo tauri build` produces a macOS DMG. Installing the DMG and launching the app processes a dropped file to searchable PDF — verified from the installed app, not dev mode.
 - [ ] **S02: Auto-Update Wiring** `risk:medium` `depends:[S01]`
   > After this: The app checks for updates on launch via `tauri-plugin-updater` with a configured GitHub Releases endpoint. When no update is available, it silently continues. The signing keypair and updater config are in place for M003's release workflow to complete the loop.
-- [ ] **S03: UX Polish** `risk:low` `depends:[]`
-  > After this: The UI has smooth card entry/exit animations, hover state transitions, refined typography, a completion summary showing total files processed, and a "clear completed" action. Visually noticeably more polished than M001.
+- [ ] **S03: Visual Identity Retheme** `risk:low` `depends:[]`
+  > After this: The entire UI is rethemed to match the Parsec icon's visual identity — black/off-white/emerald-green palette replacing the amber industrial aesthetic. New typography pairing that matches the icon's bold geometric character. White/off-white accent for processing states, green for completion. Icon integrated into the app header. All Tauri bundle icons (.icns, .ico, sized PNGs) regenerated from `icon.png`. Smooth card animations, completion summary, and "clear completed" action included as part of the polish pass.
 
 ## Boundary Map
 
@@ -83,9 +83,12 @@ Consumes:
 ### S03 (standalone)
 
 Produces:
-- Refined CSS transitions, hover states, and animations in `src/styles.css`
-- Completion summary component in `src/main.ts`
-- "Clear completed" UI action
+- Full visual retheme: new CSS custom properties, palette (black/off-white/emerald-green), typography pairing
+- White/off-white processing accent system, green completion states (replacing amber)
+- Icon in app header, regenerated Tauri bundle icons (.icns, .ico, sized PNGs) from `icon.png`
+- Smooth card animations, completion summary component, "clear completed" action
+- Updated `index.html` with new font imports
 
 Consumes:
 - Existing M001 UI code (`src/main.ts`, `src/styles.css`, `index.html`)
+- `icon.png` at repo root

@@ -1,13 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_data_files
 from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import copy_metadata
 
 datas = []
 binaries = []
 hiddenimports = ['PIL', 'PIL._tkinter_finder', 'cv2', 'lmdb', 'pyclipper', 'shapely', 'skimage', 'scipy.io', 'scipy.special', 'scipy.ndimage', 'yaml', 'requests', 'tqdm', 'packaging', 'parsec.sidecar', 'parsec.paddle_engine', 'parsec.engine', 'parsec.models', 'parsec.pipeline', 'ocrmypdf_paddleocr']
 datas += collect_data_files('paddle')
+datas += collect_data_files('paddlex')
 datas += collect_data_files('scipy')
 datas += collect_data_files('shapely')
+datas += copy_metadata('imagesize')
+datas += copy_metadata('opencv-contrib-python')
+datas += copy_metadata('pyclipper')
+datas += copy_metadata('pypdfium2')
+datas += copy_metadata('shapely')
 tmp_ret = collect_all('paddleocr')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('pyclipper')

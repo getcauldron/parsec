@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M002 — Distribution & Polish
-**Active Slice:** S01 — Sidecar Bundling & macOS Installer
-**Phase:** executing
+**Active Slice:** S02 — Auto-Update Wiring
+**Phase:** planning
 **Requirements Status:** 17 active · 0 validated · 4 deferred · 3 out of scope
 
 ## Milestone Registry
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Execute T01: Configure bundle.resources for PyInstaller _internal/ folder in slice S01.
+Plan slice S02 (Auto-Update Wiring).
