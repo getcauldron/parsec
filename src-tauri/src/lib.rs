@@ -39,6 +39,33 @@ async fn greet_sidecar(app: tauri::AppHandle) -> Result<Value, String> {
     result
 }
 
+/// Tauri command: fetch the list of supported languages from the sidecar.
+///
+/// Sends `{"cmd":"get_languages"}` and waits for the response (routed via the
+/// global `sidecar-response` event since it's not a progress event).
+#[tauri::command]
+async fn get_languages(app: tauri::AppHandle) -> Result<Value, String> {
+    let (tx, rx) = mpsc::channel::<Value>();
+
+    let id = app.listen("sidecar-response", move |event| {
+        if let Ok(payload) = serde_json::from_str::<Value>(event.payload()) {
+            // Capture the languages response (has "languages" array and "status":"ok")
+            if payload.get("languages").is_some() {
+                let _ = tx.send(payload);
+            }
+        }
+    });
+
+    sidecar::send_command(&app, &json!({"cmd": "get_languages"}))?;
+
+    let result = rx
+        .recv_timeout(Duration::from_secs(10))
+        .map_err(|_| "get_languages response timeout (10s)".to_string());
+
+    app.unlisten(id);
+    result
+}
+
 /// Tauri command: process files through the OCR sidecar with streaming progress.
 ///
 /// Files are dispatched sequentially (PaddleOCR is single-threaded). Each file
@@ -50,10 +77,12 @@ async fn greet_sidecar(app: tauri::AppHandle) -> Result<Value, String> {
 async fn process_files(
     app: tauri::AppHandle,
     paths: Vec<String>,
+    language: Option<String>,
     channel: Channel<Value>,
 ) -> Result<(), String> {
+    let lang = language.as_deref().unwrap_or("en");
     eprintln!(
-        "[parsec] process_files called with {} path(s)",
+        "[parsec] process_files called with {} path(s), language={lang}",
         paths.len()
     );
 
@@ -88,6 +117,7 @@ async fn process_files(
             "cmd": "process_file",
             "id": request_id,
             "input_path": path,
+            "language": lang,
         });
 
         if let Err(e) = sidecar::send_command(&app, &cmd) {
@@ -165,6 +195,7 @@ async fn process_files(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .manage(SidecarState::new())
         .setup(|app| {
             let handle = app.handle().clone();
@@ -177,7 +208,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet_sidecar, process_files])
+        .invoke_handler(tauri::generate_handler![greet_sidecar, get_languages, process_files])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 sidecar::kill_sidecar(&window.app_handle());

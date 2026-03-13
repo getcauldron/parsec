@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M001 — Core App
-**Active Slice:** S04 — Multi-Language & Settings
-**Phase:** planning
+**Active Slice:** S05 — PDF Input + Preprocessing
+**Phase:** research
 **Requirements Status:** 17 active · 0 validated · 4 deferred · 3 out of scope
 
 ## Milestone Registry
@@ -11,10 +11,11 @@
 - ⬜ **M003:** M003
 
 ## Recent Decisions
-- None recorded
+- Language short codes match PaddleOCR codes directly (no translation layer)
+- Unknown language codes raise ValueError for explicit failure
 
 ## Blockers
 - None
 
 ## Next Action
-Plan slice S04 (Multi-Language & Settings).
+Research slice S05 (PDF Input + Preprocessing).

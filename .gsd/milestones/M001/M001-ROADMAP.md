@@ -66,7 +66,7 @@ This milestone is complete only when all are true:
 - [x] **S03: Drop-and-Go Pipeline** `risk:medium` `depends:[S01,S02]`
   > After this: dropping an image file onto the app window shows progress and produces a searchable PDF next to the original.
 
-- [ ] **S04: Multi-Language & Settings** `risk:low` `depends:[S03]`
+- [x] **S04: Multi-Language & Settings** `risk:low` `depends:[S03]`
   > After this: selecting a non-English language in settings and dropping a document in that language produces correct OCR output.
 
 - [ ] **S05: PDF Input + Preprocessing** `risk:medium` `depends:[S03]`

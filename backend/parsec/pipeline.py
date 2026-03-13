@@ -13,6 +13,7 @@ from pathlib import Path
 import ocrmypdf
 from ocrmypdf import ExitCode
 
+from parsec.languages import get_tesseract_code
 from parsec.models import OcrOptions, ProcessResult
 
 logger = logging.getLogger(__name__)
@@ -20,28 +21,13 @@ logger = logging.getLogger(__name__)
 # The plugin module path for ocrmypdf-paddleocr
 _PADDLEOCR_PLUGIN = "ocrmypdf_paddleocr"
 
-# Map our short language codes to Tesseract's ISO 639-2 codes.
-# OCRmyPDF validates languages against the engine's supported set,
-# and the PaddleOCR plugin uses Tesseract-style codes internally.
-_LANG_TO_TESSERACT: dict[str, str] = {
-    "en": "eng",
-    "ch": "chi_sim",
-    "fr": "fra",
-    "de": "deu",
-    "es": "spa",
-    "pt": "por",
-    "it": "ita",
-    "ru": "rus",
-    "ja": "jpn",
-    "ko": "kor",
-    "ar": "ara",
-    "hi": "hin",
-}
-
 
 def _to_tesseract_lang(lang: str) -> str:
-    """Convert a short language code to Tesseract's ISO 639-2 code."""
-    return _LANG_TO_TESSERACT.get(lang, lang)
+    """Convert a PaddleOCR short code to Tesseract's ISO 639-2 code.
+
+    Delegates to the authoritative language registry in languages.py.
+    """
+    return get_tesseract_code(lang)
 
 
 def process_file(

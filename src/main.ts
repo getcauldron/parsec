@@ -1,6 +1,7 @@
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { initSettings, getSelectedLanguage } from "./settings";
 
 // --- Types ---
 
@@ -255,8 +256,11 @@ async function processDroppedPaths(paths: string[]): Promise<void> {
     console.log(`[parsec-ui] ${entry.name}: ${entry.stage}`);
   };
 
+  const language = getSelectedLanguage();
+  console.log(`[parsec-ui] processing ${accepted.length} file(s) with language=${language}`);
+
   try {
-    await invoke("process_files", { paths: accepted, channel });
+    await invoke("process_files", { paths: accepted, language, channel });
   } catch (err) {
     console.error("[parsec-ui] process_files invoke error:", err);
     // Mark any still-processing files as errored
@@ -308,6 +312,11 @@ async function setupDragDrop(): Promise<void> {
 
 setupDragDrop().catch((err) => {
   console.error("[parsec-ui] failed to set up drag-drop:", err);
+});
+
+// Initialize settings panel (loads store, fetches languages from sidecar)
+initSettings().catch((err) => {
+  console.error("[parsec-ui] failed to initialize settings:", err);
 });
 
 // Dev-only: expose processDroppedPaths for testing from console/automation

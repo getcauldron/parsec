@@ -93,6 +93,16 @@ def _handle_command(cmd_obj: dict, start_time: float, state: _SidecarState) -> N
         _handle_process_file(cmd_obj, req_id, state)
         return
 
+    if cmd == "get_languages":
+        from parsec.languages import all_languages
+
+        _send({
+            "status": "ok",
+            "languages": all_languages(),
+            "id": req_id,
+        })
+        return
+
     _send({"status": "error", "error": f"unknown command: {cmd}", "id": req_id})
 
 
@@ -132,6 +142,24 @@ def _handle_process_file(
         })
         return
 
+    # --- Read language (defaults to English) ---
+    language = cmd_obj.get("language", "en")
+    logger.info("process_file id=%s language=%s path=%s", req_id, language, input_path)
+
+    # --- Validate language code ---
+    try:
+        from parsec.languages import get_language
+
+        get_language(language)
+    except ValueError as exc:
+        _send({
+            "type": "progress",
+            "id": req_id,
+            "stage": "error",
+            "error": str(exc),
+        })
+        return
+
     # --- Compute output path: strip ext, append _ocr.pdf ---
     # "scan.png" → "scan_ocr.pdf", "my.photo.jpg" → "my.photo_ocr.pdf"
     output_path = input_path.parent / (input_path.stem + "_ocr.pdf")
@@ -150,13 +178,16 @@ def _handle_process_file(
     # --- Run the pipeline with stdout protection ---
     try:
         from parsec.pipeline import process_file as run_pipeline
+        from parsec.models import OcrOptions
+
+        ocr_options = OcrOptions(language=language)
 
         # Defense in depth: redirect stdout to devnull during pipeline execution
         # to prevent any C++ noise from PaddleOCR/PaddlePaddle corrupting the protocol.
         real_stdout = sys.stdout
         try:
             sys.stdout = open(os.devnull, "w")
-            result = run_pipeline(input_path, output_path)
+            result = run_pipeline(input_path, output_path, options=ocr_options)
         finally:
             sys.stdout.close()
             sys.stdout = real_stdout
