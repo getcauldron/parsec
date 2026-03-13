@@ -265,6 +265,33 @@ def _word_wrap(
 
 # ─── Main ────────────────────────────────────────────────────────────
 
+def _generate_pdf_nosearch(source_image: Path, output_path: Path) -> str:
+    """Wrap an image into a non-searchable PDF (image-only, no text layer).
+
+    Returns the ground truth text (same as the source image's .gt.txt).
+    """
+    img = Image.open(source_image)
+    # Convert to RGB if necessary (PNG may have RGBA)
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img.save(output_path, "PDF", resolution=300.0)
+    return ""  # ground truth loaded from source
+
+
+def _generate_pdf_skewed(source_image: Path, output_path: Path, angle: float = 3.0) -> str:
+    """Wrap a skewed version of an image into a non-searchable PDF.
+
+    Returns empty string — ground truth loaded from source.
+    """
+    img = Image.open(source_image)
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    # Apply rotation to simulate skew
+    img = img.rotate(angle, resample=Image.BICUBIC, fillcolor="white", expand=False)
+    img.save(output_path, "PDF", resolution=300.0)
+    return ""
+
+
 def generate_all() -> dict[str, list[tuple[Path, Path]]]:
     """Generate all fixture images and ground truth files.
 
@@ -307,6 +334,31 @@ def generate_all() -> dict[str, list[tuple[Path, Path]]]:
         gt_path.write_text(ground_truth, encoding="utf-8")
         fixtures["degraded"].append((img_path, gt_path))
         print(f"  ✓ {img_path.name} ({len(ground_truth)} chars)")
+
+    # ── PDF fixtures (non-searchable, image-only) ──
+    fixtures["pdf"] = []
+
+    # Non-searchable PDF from clean_01
+    clean_01 = FIXTURE_DIR / "clean_01.png"
+    if clean_01.exists():
+        pdf_path = FIXTURE_DIR / "pdf_nosearch_01.pdf"
+        gt_path = FIXTURE_DIR / "pdf_nosearch_01.gt.txt"
+        _generate_pdf_nosearch(clean_01, pdf_path)
+        # Copy ground truth from source image
+        source_gt = FIXTURE_DIR / "clean_01.gt.txt"
+        if source_gt.exists():
+            gt_path.write_text(source_gt.read_text(encoding="utf-8"), encoding="utf-8")
+        fixtures["pdf"].append((pdf_path, gt_path))
+        print(f"  ✓ {pdf_path.name} (from clean_01.png)")
+
+        # Skewed PDF from clean_01
+        skewed_path = FIXTURE_DIR / "pdf_skewed_01.pdf"
+        skewed_gt = FIXTURE_DIR / "pdf_skewed_01.gt.txt"
+        _generate_pdf_skewed(clean_01, skewed_path)
+        if source_gt.exists():
+            skewed_gt.write_text(source_gt.read_text(encoding="utf-8"), encoding="utf-8")
+        fixtures["pdf"].append((skewed_path, skewed_gt))
+        print(f"  ✓ {skewed_path.name} (skewed from clean_01.png)")
 
     return fixtures
 

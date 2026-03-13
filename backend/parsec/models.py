@@ -31,10 +31,20 @@ class OcrOptions:
     Attributes:
         language: Language code for recognition (e.g. "en", "ch", "fr").
         dpi: Image DPI — used when source image lacks DPI metadata.
+        deskew: Correct page skew (rotation) before OCR.
+        rotate_pages: Detect and correct 90°/180°/270° page rotation.
+        clean: Remove scan artifacts via unpaper (requires unpaper binary).
+        skip_text: OCR only pages without existing text (PDF inputs only).
+        force_ocr: Re-OCR all pages, ignoring existing text layers.
     """
 
     language: str = "en"
     dpi: int = 300
+    deskew: bool = False
+    rotate_pages: bool = False
+    clean: bool = False
+    skip_text: bool = False
+    force_ocr: bool = False
 
 
 @dataclass
@@ -56,3 +66,4 @@ class ProcessResult:
     duration_seconds: float = 0.0
     success: bool = True
     error: str | None = None
+    already_searchable: bool = False

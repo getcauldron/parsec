@@ -78,6 +78,10 @@ async fn process_files(
     app: tauri::AppHandle,
     paths: Vec<String>,
     language: Option<String>,
+    deskew: Option<bool>,
+    rotate_pages: Option<bool>,
+    clean: Option<bool>,
+    force_ocr: Option<bool>,
     channel: Channel<Value>,
 ) -> Result<(), String> {
     let lang = language.as_deref().unwrap_or("en");
@@ -113,12 +117,25 @@ async fn process_files(
         let mut rx = state.register_channel(request_id.clone());
 
         // Send the process_file command to sidecar.
-        let cmd = json!({
+        let mut cmd = json!({
             "cmd": "process_file",
             "id": request_id,
             "input_path": path,
             "language": lang,
         });
+        // Forward preprocessing options when set
+        if let Some(v) = deskew {
+            cmd["deskew"] = json!(v);
+        }
+        if let Some(v) = rotate_pages {
+            cmd["rotate_pages"] = json!(v);
+        }
+        if let Some(v) = clean {
+            cmd["clean"] = json!(v);
+        }
+        if let Some(v) = force_ocr {
+            cmd["force_ocr"] = json!(v);
+        }
 
         if let Err(e) = sidecar::send_command(&app, &cmd) {
             eprintln!("[parsec] failed to send command for id={request_id}: {e}");

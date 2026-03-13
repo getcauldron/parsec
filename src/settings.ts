@@ -15,10 +15,21 @@ interface LanguagesResponse {
   languages: Language[];
 }
 
+// --- Types (preprocessing) ---
+
+interface PreprocessingOptions {
+  deskew: boolean;
+  rotate_pages: boolean;
+  clean: boolean;
+}
+
 // --- State ---
 
 const STORE_FILE = "settings.json";
 const STORE_KEY_LANGUAGE = "language";
+const STORE_KEY_PREPROCESSING_DESKEW = "preprocessing_deskew";
+const STORE_KEY_PREPROCESSING_ROTATE = "preprocessing_rotate";
+const STORE_KEY_PREPROCESSING_CLEAN = "preprocessing_clean";
 const DEFAULT_LANGUAGE = "en";
 
 /** English-only fallback when sidecar is unavailable */
@@ -31,11 +42,19 @@ let selectedLanguage = DEFAULT_LANGUAGE;
 let languages: Language[] = [];
 let panelOpen = false;
 
+// Preprocessing toggle state (all default false)
+let preprocessingDeskew = false;
+let preprocessingRotate = false;
+let preprocessingClean = false;
+
 // --- DOM ---
 
 let settingsBtn: HTMLButtonElement;
 let settingsPanel: HTMLDivElement;
 let languageSelect: HTMLSelectElement;
+let toggleDeskew: HTMLInputElement;
+let toggleRotate: HTMLInputElement;
+let toggleClean: HTMLInputElement;
 
 // --- Public API ---
 
@@ -44,10 +63,20 @@ export function getSelectedLanguage(): string {
   return selectedLanguage;
 }
 
+/** Get current preprocessing toggle state. */
+export function getPreprocessingOptions(): PreprocessingOptions {
+  return {
+    deskew: preprocessingDeskew,
+    rotate_pages: preprocessingRotate,
+    clean: preprocessingClean,
+  };
+}
+
 /** Initialize the settings module: load store, fetch languages, build UI. */
 export async function initSettings(): Promise<void> {
   buildSettingsDOM();
   await loadStore();
+  syncToggleState();
   await fetchLanguages();
   populateLanguagePicker();
 }
@@ -57,7 +86,12 @@ export async function initSettings(): Promise<void> {
 async function loadStore(): Promise<void> {
   try {
     store = await load(STORE_FILE, {
-      defaults: { [STORE_KEY_LANGUAGE]: DEFAULT_LANGUAGE },
+      defaults: {
+        [STORE_KEY_LANGUAGE]: DEFAULT_LANGUAGE,
+        [STORE_KEY_PREPROCESSING_DESKEW]: false,
+        [STORE_KEY_PREPROCESSING_ROTATE]: false,
+        [STORE_KEY_PREPROCESSING_CLEAN]: false,
+      },
       autoSave: true,
     });
     const saved = await store.get<string>(STORE_KEY_LANGUAGE);
@@ -67,6 +101,15 @@ async function loadStore(): Promise<void> {
     } else {
       console.log(`[parsec-settings] no saved language, using default: ${DEFAULT_LANGUAGE}`);
     }
+
+    // Load preprocessing toggles
+    const deskew = await store.get<boolean>(STORE_KEY_PREPROCESSING_DESKEW);
+    const rotate = await store.get<boolean>(STORE_KEY_PREPROCESSING_ROTATE);
+    const clean = await store.get<boolean>(STORE_KEY_PREPROCESSING_CLEAN);
+    preprocessingDeskew = deskew ?? false;
+    preprocessingRotate = rotate ?? false;
+    preprocessingClean = clean ?? false;
+    console.log(`[parsec-settings] loaded preprocessing: deskew=${preprocessingDeskew} rotate=${preprocessingRotate} clean=${preprocessingClean}`);
   } catch (err) {
     console.warn("[parsec-settings] failed to load store, using defaults:", err);
   }
@@ -80,6 +123,24 @@ async function saveLanguage(code: string): Promise<void> {
       console.log(`[parsec-settings] saved language: ${code}`);
     } catch (err) {
       console.warn("[parsec-settings] failed to save language:", err);
+    }
+  }
+}
+
+/** Sync toggle DOM state from in-memory values (called after store loads). */
+function syncToggleState(): void {
+  if (toggleDeskew) toggleDeskew.checked = preprocessingDeskew;
+  if (toggleRotate) toggleRotate.checked = preprocessingRotate;
+  if (toggleClean) toggleClean.checked = preprocessingClean;
+}
+
+async function savePreprocessingOption(key: string, value: boolean): Promise<void> {
+  if (store) {
+    try {
+      await store.set(key, value);
+      console.log(`[parsec-settings] saved ${key}: ${value}`);
+    } catch (err) {
+      console.warn(`[parsec-settings] failed to save ${key}:`, err);
     }
   }
 }
@@ -142,6 +203,30 @@ function buildSettingsDOM(): void {
           <option value="en">English</option>
         </select>
       </div>
+      <div class="settings-divider"></div>
+      <div class="settings-group settings-group--toggles">
+        <div class="settings-label">
+          <span class="settings-label-text">Preprocessing</span>
+          <span class="settings-label-hint">Applied to scanned images &amp; PDFs</span>
+        </div>
+        <div class="settings-toggles">
+          <label class="settings-toggle">
+            <input type="checkbox" id="toggle-deskew" class="settings-toggle-input" />
+            <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+            <span class="settings-toggle-label">Auto-deskew</span>
+          </label>
+          <label class="settings-toggle">
+            <input type="checkbox" id="toggle-rotate" class="settings-toggle-input" />
+            <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+            <span class="settings-toggle-label">Auto-rotate pages</span>
+          </label>
+          <label class="settings-toggle">
+            <input type="checkbox" id="toggle-clean" class="settings-toggle-input" />
+            <span class="settings-toggle-track"><span class="settings-toggle-thumb"></span></span>
+            <span class="settings-toggle-label">Clean scan artifacts</span>
+          </label>
+        </div>
+      </div>
     </div>
   `;
 
@@ -155,6 +240,31 @@ function buildSettingsDOM(): void {
     const code = languageSelect.value;
     console.log(`[parsec-settings] language changed to: ${code}`);
     saveLanguage(code);
+  });
+
+  // Preprocessing toggle wiring
+  toggleDeskew = document.getElementById("toggle-deskew") as HTMLInputElement;
+  toggleRotate = document.getElementById("toggle-rotate") as HTMLInputElement;
+  toggleClean = document.getElementById("toggle-clean") as HTMLInputElement;
+
+  // Apply saved state to checkboxes
+  toggleDeskew.checked = preprocessingDeskew;
+  toggleRotate.checked = preprocessingRotate;
+  toggleClean.checked = preprocessingClean;
+
+  toggleDeskew.addEventListener("change", () => {
+    preprocessingDeskew = toggleDeskew.checked;
+    savePreprocessingOption(STORE_KEY_PREPROCESSING_DESKEW, preprocessingDeskew);
+  });
+
+  toggleRotate.addEventListener("change", () => {
+    preprocessingRotate = toggleRotate.checked;
+    savePreprocessingOption(STORE_KEY_PREPROCESSING_ROTATE, preprocessingRotate);
+  });
+
+  toggleClean.addEventListener("change", () => {
+    preprocessingClean = toggleClean.checked;
+    savePreprocessingOption(STORE_KEY_PREPROCESSING_CLEAN, preprocessingClean);
   });
 }
 

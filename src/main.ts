@@ -1,7 +1,7 @@
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { initSettings, getSelectedLanguage } from "./settings";
+import { initSettings, getSelectedLanguage, getPreprocessingOptions } from "./settings";
 
 // --- Types ---
 
@@ -35,7 +35,7 @@ interface ProgressEvent {
 
 // --- State ---
 
-const ACCEPTED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".tiff", ".tif"]);
+const ACCEPTED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".tiff", ".tif", ".pdf"]);
 const files: Map<string, FileEntry> = new Map();
 let isFirstFile = true;
 let sidecarConnected = false;
@@ -257,10 +257,18 @@ async function processDroppedPaths(paths: string[]): Promise<void> {
   };
 
   const language = getSelectedLanguage();
-  console.log(`[parsec-ui] processing ${accepted.length} file(s) with language=${language}`);
+  const preprocessing = getPreprocessingOptions();
+  console.log(`[parsec-ui] processing ${accepted.length} file(s) with language=${language} preprocessing=${JSON.stringify(preprocessing)}`);
 
   try {
-    await invoke("process_files", { paths: accepted, language, channel });
+    await invoke("process_files", {
+      paths: accepted,
+      language,
+      channel,
+      deskew: preprocessing.deskew,
+      rotate_pages: preprocessing.rotate_pages,
+      clean: preprocessing.clean,
+    });
   } catch (err) {
     console.error("[parsec-ui] process_files invoke error:", err);
     // Mark any still-processing files as errored

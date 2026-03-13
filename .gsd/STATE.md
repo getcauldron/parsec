@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M001 — Core App
-**Active Slice:** S05 — PDF Input + Preprocessing
+**Active Slice:** S06 — End-to-End Integration Testing
 **Phase:** planning
 **Requirements Status:** 17 active · 0 validated · 4 deferred · 3 out of scope
 
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S05 (PDF Input + Preprocessing).
+Plan slice S06 (End-to-End Integration Testing).

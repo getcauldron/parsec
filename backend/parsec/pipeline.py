@@ -68,6 +68,33 @@ def process_file(
 
     start = time.monotonic()
 
+    is_pdf = input_path.suffix.lower() == ".pdf"
+
+    # Build preprocessing kwargs from options
+    ocr_kwargs: dict = {}
+    if options.deskew:
+        ocr_kwargs["deskew"] = True
+    if options.rotate_pages:
+        ocr_kwargs["rotate_pages"] = True
+    if options.clean:
+        ocr_kwargs["clean"] = True
+        ocr_kwargs["clean_final"] = True
+
+    # skip_text and force_ocr are mutually exclusive; skip_text only for PDFs
+    if options.force_ocr:
+        ocr_kwargs["force_ocr"] = True
+    elif options.skip_text and is_pdf:
+        ocr_kwargs["skip_text"] = True
+
+    preprocess_mode = "force_ocr" if options.force_ocr else (
+        "skip_text" if (options.skip_text and is_pdf) else "default"
+    )
+    logger.info(
+        "Preprocessing mode=%s deskew=%s rotate=%s clean=%s for %s",
+        preprocess_mode, options.deskew, options.rotate_pages, options.clean,
+        input_path.name,
+    )
+
     try:
         tess_lang = _to_tesseract_lang(options.language)
         exit_code = ocrmypdf.ocr(
@@ -79,6 +106,7 @@ def process_file(
             plugins=[_PADDLEOCR_PLUGIN],
             jobs=1,  # PaddlePaddle is not multi-process safe
             progress_bar=False,
+            **ocr_kwargs,
         )
     except Exception as exc:
         elapsed = time.monotonic() - start
@@ -93,6 +121,31 @@ def process_file(
         )
 
     elapsed = time.monotonic() - start
+
+    # Handle special exit codes
+    if exit_code == ExitCode.already_done_ocr:
+        logger.info(
+            "PDF already searchable for %s (%.2fs) — no OCR needed",
+            input_path.name, elapsed,
+        )
+        return ProcessResult(
+            input_path=input_path,
+            output_path=output_path,
+            duration_seconds=elapsed,
+            success=True,
+            already_searchable=True,
+        )
+
+    if exit_code == ExitCode.encrypted_pdf:
+        error_msg = "Encrypted or password-protected PDF — cannot process"
+        logger.error("Pipeline failed for %s: %s", input_path.name, error_msg)
+        return ProcessResult(
+            input_path=input_path,
+            output_path=output_path,
+            duration_seconds=elapsed,
+            success=False,
+            error=error_msg,
+        )
 
     if exit_code != ExitCode.ok:
         error_msg = f"OCRmyPDF exited with {exit_code.name} ({exit_code.value})"

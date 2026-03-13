@@ -38,8 +38,8 @@ from pathlib import Path
 
 VERSION = "0.1.0"
 
-# Supported image extensions for process_file
-ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
+# Supported file extensions for process_file
+ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".pdf"}
 
 logger = logging.getLogger("parsec.sidecar")
 
@@ -144,7 +144,23 @@ def _handle_process_file(
 
     # --- Read language (defaults to English) ---
     language = cmd_obj.get("language", "en")
-    logger.info("process_file id=%s language=%s path=%s", req_id, language, input_path)
+
+    # --- Read preprocessing options ---
+    deskew = cmd_obj.get("deskew", False)
+    rotate_pages = cmd_obj.get("rotate_pages", False)
+    clean = cmd_obj.get("clean", False)
+    skip_text = cmd_obj.get("skip_text", False)
+    force_ocr = cmd_obj.get("force_ocr", False)
+
+    # Default to skip_text=True for PDF inputs when no explicit mode is set
+    is_pdf = ext == ".pdf"
+    if is_pdf and not skip_text and not force_ocr:
+        skip_text = True
+
+    logger.info(
+        "process_file id=%s language=%s path=%s deskew=%s rotate=%s clean=%s skip_text=%s force_ocr=%s",
+        req_id, language, input_path, deskew, rotate_pages, clean, skip_text, force_ocr,
+    )
 
     # --- Validate language code ---
     try:
@@ -180,7 +196,14 @@ def _handle_process_file(
         from parsec.pipeline import process_file as run_pipeline
         from parsec.models import OcrOptions
 
-        ocr_options = OcrOptions(language=language)
+        ocr_options = OcrOptions(
+            language=language,
+            deskew=deskew,
+            rotate_pages=rotate_pages,
+            clean=clean,
+            skip_text=skip_text,
+            force_ocr=force_ocr,
+        )
 
         # Defense in depth: redirect stdout to devnull during pipeline execution
         # to prevent any C++ noise from PaddleOCR/PaddlePaddle corrupting the protocol.
@@ -204,13 +227,16 @@ def _handle_process_file(
 
     # --- Emit result ---
     if result.success:
-        _send({
+        complete_event: dict = {
             "type": "progress",
             "id": req_id,
             "stage": "complete",
             "output_path": str(result.output_path),
             "duration": round(result.duration_seconds, 3),
-        })
+        }
+        if result.already_searchable:
+            complete_event["already_searchable"] = True
+        _send(complete_event)
     else:
         _send({
             "type": "progress",

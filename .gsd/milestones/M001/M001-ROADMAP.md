@@ -69,7 +69,7 @@ This milestone is complete only when all are true:
 - [x] **S04: Multi-Language & Settings** `risk:low` `depends:[S03]`
   > After this: selecting a non-English language in settings and dropping a document in that language produces correct OCR output.
 
-- [ ] **S05: PDF Input + Preprocessing** `risk:medium` `depends:[S03]`
+- [x] **S05: PDF Input + Preprocessing** `risk:medium` `depends:[S03]`
   > After this: dropping a skewed non-searchable PDF produces a deskewed searchable PDF with improved OCR accuracy.
 
 - [ ] **S06: End-to-End Integration Testing** `risk:low` `depends:[S04,S05]`

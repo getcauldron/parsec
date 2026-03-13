@@ -291,3 +291,124 @@ def test_process_file_output_path(tmp_path):
     output_path = Path(complete[0]["output_path"])
     assert output_path.name == "scan_ocr.pdf"
     assert output_path.parent == tmp_path
+
+
+# ─── PDF extension and preprocessing tests ─────────────────────────────
+
+
+def test_process_file_pdf_extension_accepted(tmp_path):
+    """PDF files are accepted by the sidecar (no unsupported extension error)."""
+    import shutil
+
+    src = FIXTURES_DIR / "pdf_nosearch_01.pdf"
+    input_file = tmp_path / "document.pdf"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "pdf-ext-1",
+        "input_path": str(input_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=120.0)
+
+    progress = [r for r in responses if r.get("type") == "progress"]
+    stages = [r.get("stage") for r in progress]
+
+    # Should NOT get an "Unsupported file extension" error
+    for r in progress:
+        if r.get("stage") == "error":
+            assert "Unsupported file extension" not in r.get("error", ""), \
+                f"PDF should be accepted, got error: {r['error']}"
+
+    # Should reach at least queued + processing
+    assert "queued" in stages, f"Expected 'queued' stage, got: {stages}"
+    assert "processing" in stages or "complete" in stages, \
+        f"Expected processing or complete, got: {stages}"
+
+
+def test_process_file_pdf_output_naming(tmp_path):
+    """PDF input: document.pdf → document_ocr.pdf."""
+    import shutil
+
+    src = FIXTURES_DIR / "pdf_nosearch_01.pdf"
+    input_file = tmp_path / "document.pdf"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "pdf-name-1",
+        "input_path": str(input_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=120.0)
+
+    complete = [r for r in responses if r.get("stage") == "complete"]
+    assert len(complete) == 1
+    output_path = Path(complete[0]["output_path"])
+    assert output_path.name == "document_ocr.pdf"
+
+
+def test_process_file_preprocessing_options_logged(tmp_path):
+    """Preprocessing options from command JSON appear in sidecar stderr logs."""
+    import shutil
+
+    src = FIXTURES_DIR / "pdf_nosearch_01.pdf"
+    input_file = tmp_path / "preproc_test.pdf"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "preproc-1",
+        "input_path": str(input_file),
+        "deskew": True,
+        "rotate_pages": True,
+        "force_ocr": True,
+    })
+
+    stdin_data = cmd + "\n"
+    result = subprocess.run(
+        [sys.executable, "-m", SIDECAR_MODULE],
+        input=stdin_data,
+        capture_output=True,
+        text=True,
+        timeout=120.0,
+        cwd=str(BACKEND_DIR),
+    )
+
+    # Preprocessing options should be logged in stderr
+    stderr = result.stderr
+    assert "deskew=True" in stderr, f"Expected deskew=True in stderr: {stderr[:500]}"
+    assert "rotate=True" in stderr or "rotate_pages=True" in stderr, \
+        f"Expected rotate=True in stderr: {stderr[:500]}"
+    assert "force_ocr=True" in stderr, f"Expected force_ocr=True in stderr: {stderr[:500]}"
+
+
+def test_process_file_pdf_default_skip_text(tmp_path):
+    """PDF inputs default to skip_text=True when no explicit mode is set."""
+    import shutil
+
+    src = FIXTURES_DIR / "pdf_nosearch_01.pdf"
+    input_file = tmp_path / "default_skip.pdf"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "skip-default-1",
+        "input_path": str(input_file),
+        # No skip_text or force_ocr specified — should default to skip_text=True
+    })
+
+    stdin_data = cmd + "\n"
+    result = subprocess.run(
+        [sys.executable, "-m", SIDECAR_MODULE],
+        input=stdin_data,
+        capture_output=True,
+        text=True,
+        timeout=120.0,
+        cwd=str(BACKEND_DIR),
+    )
+
+    # stderr should show skip_text=True as the default for PDFs
+    assert "skip_text=True" in result.stderr, \
+        f"Expected skip_text=True in stderr for PDF default: {result.stderr[:500]}"
