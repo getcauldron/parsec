@@ -1,7 +1,7 @@
 # Parsec
 
 [![CI](https://github.com/getcauldron/parsec/actions/workflows/ci.yml/badge.svg)](https://github.com/getcauldron/parsec/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 
 Desktop app that turns scanned documents and images into searchable PDFs. Drop files in, get searchable PDFs out. Supports 49 languages, runs entirely offline.
 
@@ -147,4 +147,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, code style, and PR workflo
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)
