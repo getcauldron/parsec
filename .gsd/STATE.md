@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M002 — Distribution & Polish
-**Active Slice:** S02 — Auto-Update Wiring
+**Active Slice:** S03 — Visual Identity Retheme
 **Phase:** planning
 **Requirements Status:** 17 active · 0 validated · 4 deferred · 3 out of scope
 
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S02 (Auto-Update Wiring).
+Plan slice S03 (Visual Identity Retheme).

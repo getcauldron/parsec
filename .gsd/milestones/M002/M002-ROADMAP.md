@@ -47,7 +47,7 @@ This milestone is complete only when all are true:
 
 - [x] **S01: Sidecar Bundling & macOS Installer** `risk:high` `depends:[]`
   > After this: `cargo tauri build` produces a macOS DMG. Installing the DMG and launching the app processes a dropped file to searchable PDF — verified from the installed app, not dev mode.
-- [ ] **S02: Auto-Update Wiring** `risk:medium` `depends:[S01]`
+- [x] **S02: Auto-Update Wiring** `risk:medium` `depends:[S01]`
   > After this: The app checks for updates on launch via `tauri-plugin-updater` with a configured GitHub Releases endpoint. When no update is available, it silently continues. The signing keypair and updater config are in place for M003's release workflow to complete the loop.
 - [ ] **S03: Visual Identity Retheme** `risk:low` `depends:[]`
   > After this: The entire UI is rethemed to match the Parsec icon's visual identity — black/off-white/emerald-green palette replacing the amber industrial aesthetic. New typography pairing that matches the icon's bold geometric character. White/off-white accent for processing states, green for completion. Icon integrated into the app header. All Tauri bundle icons (.icns, .ico, sized PNGs) regenerated from `icon.png`. Smooth card animations, completion summary, and "clear completed" action included as part of the polish pass.

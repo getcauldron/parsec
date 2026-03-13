@@ -15,6 +15,8 @@
       ]
     },
     "shell:allow-stdin-write",
-    "store:default"
+    "store:default",
+    "updater:default",
+    "process:allow-restart"
   ]
 }

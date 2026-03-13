@@ -1,6 +1,7 @@
 import { invoke, Channel } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { check } from "@tauri-apps/plugin-updater";
 import { initSettings, getSelectedLanguage, getPreprocessingOptions } from "./settings";
 
 // --- Types ---
@@ -326,6 +327,34 @@ setupDragDrop().catch((err) => {
 initSettings().catch((err) => {
   console.error("[parsec-ui] failed to initialize settings:", err);
 });
+
+// --- Auto-update check ---
+
+/**
+ * Non-blocking update check on startup.
+ * Hits the GitHub Releases endpoint for latest.json.
+ * Until M003 publishes a release, this will 404 — that's expected and handled.
+ */
+async function checkForUpdates(): Promise<void> {
+  try {
+    const update = await check();
+    if (update) {
+      console.log(
+        `[parsec-update] Update available: v${update.version} (current: v${update.currentVersion})`
+      );
+      // Future: show update notification UI. For now, just log.
+    } else {
+      console.log("[parsec-update] No update available");
+    }
+  } catch (err) {
+    // 404 from missing endpoint is expected until M003 publishes releases.
+    // Network errors, DNS failures, etc. are also non-fatal — the app works fine without updates.
+    console.log(`[parsec-update] Update check failed (non-fatal): ${err}`);
+  }
+}
+
+// Fire-and-forget: don't await, don't block sidecar init or UI.
+checkForUpdates();
 
 // Dev-only: expose processDroppedPaths for testing from console/automation
 if (import.meta.env.DEV) {

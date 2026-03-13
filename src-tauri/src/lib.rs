@@ -213,8 +213,14 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(SidecarState::new())
         .setup(|app| {
+            // Updater must be registered inside setup() via app.handle().plugin(),
+            // not in the builder chain — this is a tauri-plugin-updater requirement.
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+
             let handle = app.handle().clone();
 
             // Spawn sidecar after plugins are initialized.
