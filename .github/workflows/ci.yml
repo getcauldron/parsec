@@ -98,6 +98,8 @@ jobs:
           target_triple="$(rustc -vV | awk '/^host:/ { print $2 }')"
           touch "binaries/parsec-sidecar-${target_triple}"
           chmod +x "binaries/parsec-sidecar-${target_triple}"
+          mkdir -p ../backend/dist/parsec-sidecar/_internal
+          touch ../backend/dist/parsec-sidecar/_internal/.gitkeep
 
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
