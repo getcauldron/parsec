@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M003 — Documentation & CI
-**Active Slice:** S04 — Documentation Site
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 0 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S04 (Documentation Site).
+All slices complete in M003. Write milestone summary.
