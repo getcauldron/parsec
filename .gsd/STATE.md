@@ -2,7 +2,7 @@
 
 **Active Milestone:** M001 — Core App
 **Active Slice:** S05 — PDF Input + Preprocessing
-**Phase:** research
+**Phase:** planning
 **Requirements Status:** 17 active · 0 validated · 4 deferred · 3 out of scope
 
 ## Milestone Registry
@@ -11,11 +11,10 @@
 - ⬜ **M003:** M003
 
 ## Recent Decisions
-- Language short codes match PaddleOCR codes directly (no translation layer)
-- Unknown language codes raise ValueError for explicit failure
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Research slice S05 (PDF Input + Preprocessing).
+Plan slice S05 (PDF Input + Preprocessing).
