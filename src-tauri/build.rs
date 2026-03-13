@@ -12,13 +12,21 @@ fn main() {
     let manifest_dir = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
     let binaries_dir = manifest_dir.join("binaries");
 
+    // On Windows targets, both the PyInstaller output and the Tauri sidecar
+    // name need the .exe extension.
+    let exe_suffix = if target_triple.contains("windows") {
+        ".exe"
+    } else {
+        ""
+    };
+
     let pyinstaller_binary = manifest_dir
         .parent()
         .unwrap()
-        .join("backend/dist/parsec-sidecar/parsec-sidecar");
+        .join(format!("backend/dist/parsec-sidecar/parsec-sidecar{exe_suffix}"));
 
     let sidecar_with_triple =
-        binaries_dir.join(format!("parsec-sidecar-{target_triple}"));
+        binaries_dir.join(format!("parsec-sidecar-{target_triple}{exe_suffix}"));
 
     if profile == "release" && pyinstaller_binary.exists() {
         // Production build: copy the real PyInstaller binary

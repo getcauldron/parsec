@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M003 — Documentation & CI
-**Active Slice:** S03 — Cross-Platform Release Workflow
+**Active Slice:** S04 — Documentation Site
 **Phase:** planning
 **Requirements Status:** 0 active · 0 validated · 0 deferred · 0 out of scope
 
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S03 (Cross-Platform Release Workflow).
+Plan slice S04 (Documentation Site).

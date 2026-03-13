@@ -43,6 +43,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "../backend/dist/parsec-sidecar/_internal/**/*": "_internal/"
+    },
     "macOS": {
       "files": {
         "Frameworks": "../backend/dist/parsec-sidecar/_internal"
