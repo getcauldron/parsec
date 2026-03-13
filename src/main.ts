@@ -48,6 +48,85 @@ const fileList = document.getElementById("file-list") as HTMLDivElement;
 const statusIndicator = document.getElementById("sidecar-status") as HTMLDivElement;
 const statusLabel = statusIndicator.querySelector(".indicator-label") as HTMLSpanElement;
 
+// --- Summary bar ---
+
+const summaryBar = document.createElement("div");
+summaryBar.className = "summary-bar";
+summaryBar.style.display = "none";
+summaryBar.innerHTML = `
+  <span class="summary-bar-count"></span>
+  <button class="summary-bar-clear" title="Clear completed">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Clear
+  </button>
+`;
+// Insert between drop-zone and file-list
+dropZone.parentElement!.insertBefore(summaryBar, fileList);
+
+const summaryCount = summaryBar.querySelector(".summary-bar-count") as HTMLSpanElement;
+const summaryClearBtn = summaryBar.querySelector(".summary-bar-clear") as HTMLButtonElement;
+
+function isTerminalStage(stage: FileStage): boolean {
+  return stage === "complete" || stage === "error" || stage === "rejected";
+}
+
+function updateSummaryBar(): void {
+  if (files.size === 0) {
+    summaryBar.style.display = "none";
+    return;
+  }
+
+  let complete = 0;
+  let errored = 0;
+
+  for (const entry of files.values()) {
+    if (entry.stage === "complete") complete++;
+    else if (entry.stage === "error" || entry.stage === "rejected") errored++;
+  }
+
+  const terminal = complete + errored;
+  if (terminal === 0) {
+    summaryBar.style.display = "none";
+    return;
+  }
+
+  const parts: string[] = [];
+  if (complete > 0) parts.push(`${complete} file${complete === 1 ? "" : "s"} processed`);
+  if (errored > 0) parts.push(`${errored} error${errored === 1 ? "" : "s"}`);
+  summaryCount.textContent = parts.join(", ");
+  summaryBar.style.display = "";
+}
+
+function clearCompleted(): void {
+  const toRemove: string[] = [];
+  for (const [path, entry] of files) {
+    if (isTerminalStage(entry.stage)) {
+      toRemove.push(path);
+      entry.el.classList.add("file-card--exiting");
+    }
+  }
+
+  if (toRemove.length === 0) return;
+
+  // Wait for exit animation, then remove from DOM and Map
+  setTimeout(() => {
+    for (const path of toRemove) {
+      const entry = files.get(path);
+      if (entry) {
+        entry.el.remove();
+        files.delete(path);
+      }
+    }
+    updateDropZoneVisibility();
+    updateSummaryBar();
+    console.log(`[parsec-ui] cleared ${toRemove.length} completed/errored file(s)`);
+  }, 220);
+}
+
+summaryClearBtn.addEventListener("click", clearCompleted);
+
 // --- Sidecar status ---
 
 function setSidecarStatus(state: "connecting" | "connected" | "disconnected" | "error") {
@@ -114,6 +193,7 @@ function updateFileCard(entry: FileEntry): void {
 
   iconEl.innerHTML = stageIcon(entry.stage);
   statusEl.innerHTML = stageLabel(entry.stage, entry.error, entry.outputName, entry.duration);
+  updateSummaryBar();
 }
 
 function stageIcon(stage: FileStage): string {
@@ -176,6 +256,7 @@ function addFile(path: string, stage: FileStage, error?: string): FileEntry {
   const entry: FileEntry = { name, path, stage, error, el: card };
   files.set(path, entry);
   updateDropZoneVisibility();
+  updateSummaryBar();
   return entry;
 }
 
@@ -356,7 +437,7 @@ async function checkForUpdates(): Promise<void> {
 // Fire-and-forget: don't await, don't block sidecar init or UI.
 checkForUpdates();
 
-// Dev-only: expose processDroppedPaths for testing from console/automation
+// Dev-only: expose internals for testing from console/automation
 if (import.meta.env.DEV) {
-  (window as any).__parsec_test = { processDroppedPaths };
+  (window as any).__parsec_test = { processDroppedPaths, clearCompleted, files, updateSummaryBar };
 }

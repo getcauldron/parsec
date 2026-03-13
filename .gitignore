@@ -1,11 +1,6 @@
 
-# ── GSD baseline (auto-generated) ──
-.gsd/activity/
-.gsd/runtime/
-.gsd/worktrees/
-.gsd/auto.lock
-.gsd/metrics.json
-.gsd/STATE.md
+# ── GSD (project management artifacts, not source code) ──
+.gsd/
 .DS_Store
 Thumbs.db
 *.swp
@@ -31,3 +26,4 @@ vendor/
 coverage/
 .cache/
 tmp/
+.gsd/

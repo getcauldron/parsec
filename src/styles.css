@@ -1,37 +1,42 @@
 /* ============================================================
-   Parsec — Industrial utility aesthetic
-   Dark ground, warm amber working states, green completion,
-   monospace filenames. A control panel, not a marketing page.
+   Parsec — Precision aesthetic
+   Near-black ground, warm off-white processing states,
+   vivid emerald completion. A control panel, not a marketing page.
    ============================================================ */
 
 :root {
   /* Ground */
-  --bg-primary: #1a1a1e;
-  --bg-secondary: #222226;
-  --bg-elevated: #2a2a2f;
-  --bg-card: #252529;
-  --border: #333338;
-  --border-subtle: #2a2a2f;
+  --bg-primary: #0c0c0c;
+  --bg-secondary: #141414;
+  --bg-elevated: #1c1c1c;
+  --bg-card: #181818;
+  --border: #2a2a2a;
+  --border-subtle: #1e1e1e;
 
   /* Text */
-  --text-primary: #e8e6e3;
-  --text-secondary: #9a9790;
-  --text-muted: #6b675f;
+  --text-primary: #f2eeea;
+  --text-secondary: #a09a92;
+  --text-muted: #5e5a54;
 
-  /* Accents */
-  --amber: #d4a04a;
-  --amber-dim: #a07830;
-  --amber-glow: rgba(212, 160, 74, 0.12);
-  --green: #5cb85c;
-  --green-dim: #3a7a3a;
-  --green-glow: rgba(92, 184, 92, 0.10);
+  /* Accents — off-white for processing states */
+  --accent: #f2eeea;
+  --accent-dim: #a09a92;
+  --accent-glow: rgba(242, 238, 234, 0.08);
+
+  /* Success — vivid emerald */
+  --green: #00e07a;
+  --green-dim: #00b862;
+  --green-glow: rgba(0, 224, 122, 0.10);
+
+  /* Error — stays red */
   --red: #d45050;
   --red-dim: #8b3333;
   --red-glow: rgba(212, 80, 80, 0.10);
 
   /* Type */
-  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "DM Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+  --font-display: "Syne", system-ui, -apple-system, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
 
   /* Spacing */
   --radius: 6px;
@@ -91,15 +96,22 @@ body {
 
 .header-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
 }
 
+.app-icon {
+  height: 24px;
+  width: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .app-title {
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   color: var(--text-primary);
   text-transform: uppercase;
 }
@@ -131,7 +143,7 @@ body {
 }
 
 .sidecar-indicator[data-state="connecting"] .indicator-dot {
-  background: var(--amber);
+  background: var(--accent);
   animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
@@ -229,19 +241,19 @@ body {
 
 /* Active drag-over state */
 .drop-zone--active {
-  border-color: var(--amber);
-  background: var(--amber-glow);
+  border-color: var(--accent);
+  background: var(--accent-glow);
   border-style: solid;
 }
 
 .drop-zone--active .drop-icon {
-  color: var(--amber);
+  color: var(--accent);
   opacity: 1;
   transform: translateY(-2px);
 }
 
 .drop-zone--active .drop-label {
-  color: var(--amber);
+  color: var(--accent);
 }
 
 /* Compact mode — when files exist, shrink the drop zone */
@@ -261,6 +273,50 @@ body {
 
 .drop-zone--compact .drop-hint {
   display: none;
+}
+
+/* ---- Summary Bar ---- */
+
+.summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  margin: 8px 16px 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.summary-bar-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.summary-bar-clear {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.summary-bar-clear:hover {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.summary-bar-clear:active {
+  color: var(--text-primary);
 }
 
 /* ---- File List ---- */
@@ -303,18 +359,34 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   transition: border-color 0.2s ease, background-color 0.2s ease;
-  animation: card-enter 0.2s ease-out;
+  animation: card-enter 0.25s ease-out;
 }
 
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+@keyframes card-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+
+.file-card--exiting {
+  animation: card-exit 0.2s ease-in forwards;
+  pointer-events: none;
 }
 
 .file-card-icon {
@@ -376,32 +448,32 @@ body {
   color: var(--text-muted);
 }
 
-/* Initializing — warm amber, spinner */
+/* Initializing — off-white accent, spinner */
 .file-card--initializing {
-  border-color: var(--amber-dim);
-  background: var(--amber-glow);
+  border-color: var(--accent-dim);
+  background: var(--accent-glow);
 }
 
 .file-card--initializing .file-card-icon {
-  color: var(--amber);
+  color: var(--accent);
 }
 
 .file-card--initializing .file-card-status {
-  color: var(--amber-dim);
+  color: var(--accent-dim);
 }
 
-/* Processing — amber, active */
+/* Processing — off-white accent, active */
 .file-card--processing {
-  border-color: var(--amber-dim);
-  background: var(--amber-glow);
+  border-color: var(--accent-dim);
+  background: var(--accent-glow);
 }
 
 .file-card--processing .file-card-icon {
-  color: var(--amber);
+  color: var(--accent);
 }
 
 .file-card--processing .file-card-status {
-  color: var(--amber-dim);
+  color: var(--accent-dim);
 }
 
 /* Complete — green, settled */
@@ -475,14 +547,14 @@ body {
 }
 
 .settings-btn--active {
-  color: var(--amber);
-  border-color: var(--amber-dim);
-  background: var(--amber-glow);
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: var(--accent-glow);
 }
 
 .settings-btn--active:hover {
-  color: var(--amber);
-  border-color: var(--amber);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* Settings panel — slides open below header */
@@ -571,17 +643,17 @@ body {
 }
 
 .settings-toggle-input:checked + .settings-toggle-track {
-  background: var(--amber-glow);
-  border-color: var(--amber-dim);
+  background: var(--accent-glow);
+  border-color: var(--accent-dim);
 }
 
 .settings-toggle-input:checked + .settings-toggle-track .settings-toggle-thumb {
   transform: translateX(14px);
-  background: var(--amber);
+  background: var(--accent);
 }
 
 .settings-toggle-input:focus-visible + .settings-toggle-track {
-  box-shadow: 0 0 0 2px var(--amber-dim);
+  box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 .settings-toggle:hover .settings-toggle-track {
@@ -640,8 +712,8 @@ body {
 
 .settings-select:focus {
   outline: none;
-  border-color: var(--amber);
-  box-shadow: 0 0 0 1px var(--amber-dim);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
 .settings-select option,
