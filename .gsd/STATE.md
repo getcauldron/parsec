@@ -1,20 +1,20 @@
 # GSD State
 
-**Active Milestone:** M003 — Documentation & CI
+**Active Milestone:** None
 **Active Slice:** None
-**Phase:** completing-milestone
-**Requirements Status:** 0 active · 0 validated · 0 deferred · 0 out of scope
+**Phase:** idle
+**Requirements Status:** 3 validated (R010, R013, R024) · 0 active · 0 deferred · 0 out of scope
 
 ## Milestone Registry
-- ✅ **M001:** M001: Core App
+- ✅ **M001:** Core App
 - ✅ **M002:** Distribution & Polish
-- 🔄 **M003:** Documentation & CI
+- ✅ **M003:** Documentation & CI
 
 ## Recent Decisions
-- None recorded
+- D049–D058: CI architecture, cross-platform build, VitePress docs, MIT license, lint config (see DECISIONS.md)
 
 ## Blockers
 - None
 
 ## Next Action
-All slices complete in M003. Write milestone summary.
+No milestones queued. All three milestones complete.
