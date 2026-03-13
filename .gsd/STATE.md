@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M003 — Documentation & CI
-**Active Slice:** S02 — Full OCR Quality CI
+**Active Slice:** S03 — Cross-Platform Release Workflow
 **Phase:** planning
 **Requirements Status:** 0 active · 0 validated · 0 deferred · 0 out of scope
 
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S02 (Full OCR Quality CI).
+Plan slice S03 (Cross-Platform Release Workflow).

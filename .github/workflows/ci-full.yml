@@ -1,0 +1,99 @@
+name: CI Full
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # Monday 6am UTC
+
+concurrency:
+  group: ci-full-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Full Test Suite + Quality Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Cache PaddleOCR models
+        uses: actions/cache@v4
+        with:
+          path: ~/.paddlex/official_models/
+          key: paddleocr-models-3.2.0
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+
+      - name: Install Python dependencies
+        run: |
+          pip install paddlepaddle==3.2.2 paddleocr==3.2.0
+          pip install -e .[dev]
+        working-directory: backend
+
+      - name: Run full test suite
+        id: tests
+        run: |
+          pytest -v -s --tb=short --junitxml=results.xml 2>&1 | tee pytest-output.txt
+        working-directory: backend
+
+      - name: Quality summary
+        if: always() && steps.tests.outcome != 'skipped'
+        run: |
+          python3 - <<'PYEOF'
+          import re
+          import pathlib
+
+          output = pathlib.Path("backend/pytest-output.txt")
+          if not output.exists():
+              print("No pytest output found — skipping summary")
+              raise SystemExit(0)
+
+          text = output.read_text()
+
+          # Pattern matches: image_name [category]: CER=0.0123 (max 0.05), WER=0.0456 (max 0.10)
+          pattern = re.compile(
+              r"(\S+\.png)\s+\[(\w+)\]:\s+"
+              r"CER=([\d.]+)\s+\(max\s+([\d.]+)\),?\s+"
+              r"WER=([\d.]+)\s+\(max\s+([\d.]+)\)"
+          )
+
+          rows: list[tuple[str, str, str, str, str, str]] = []
+          seen: set[str] = set()
+          for m in pattern.finditer(text):
+              image, category, cer, max_cer, wer, max_wer = m.groups()
+              if image not in seen:
+                  seen.add(image)
+                  rows.append((image, category, cer, max_cer, wer, max_wer))
+
+          import os
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "/dev/null")
+
+          with open(summary_path, "a") as f:
+              f.write("## OCR Quality Benchmarks\n\n")
+              if not rows:
+                  f.write("_No CER/WER scores found in test output._\n")
+              else:
+                  f.write("| Image | Category | CER | Max CER | WER | Max WER | Status |\n")
+                  f.write("|-------|----------|-----|---------|-----|---------|--------|\n")
+                  for image, category, cer, max_cer, wer, max_wer in rows:
+                      cer_ok = float(cer) < float(max_cer)
+                      wer_ok = float(wer) < float(max_wer)
+                      status = "✅" if (cer_ok and wer_ok) else "❌"
+                      f.write(f"| {image} | {category} | {cer} | {max_cer} | {wer} | {max_wer} | {status} |\n")
+                  f.write("\n")
+
+          print(f"Wrote {len(rows)} quality scores to step summary")
+          PYEOF
