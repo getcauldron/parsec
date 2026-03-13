@@ -72,7 +72,7 @@ This milestone is complete only when all are true:
 - [x] **S05: PDF Input + Preprocessing** `risk:medium` `depends:[S03]`
   > After this: dropping a skewed non-searchable PDF produces a deskewed searchable PDF with improved OCR accuracy.
 
-- [ ] **S06: End-to-End Integration Testing** `risk:low` `depends:[S04,S05]`
+- [x] **S06: End-to-End Integration Testing** `risk:low` `depends:[S04,S05]`
   > After this: a batch of mixed inputs (images, PDFs, multi-language, skewed) all process correctly, quality thresholds pass, and error handling is verified.
 
 ## Boundary Map
