@@ -61,30 +61,35 @@ To call this milestone complete, we must prove:
 
 ### In Scope
 
-- Cross-platform installer packaging (DMG, MSI, AppImage)
-- CI/CD pipeline for multi-platform builds
-- Auto-update mechanism
+- Auto-update mechanism (Tauri updater plugin + GitHub Releases integration)
 - UX polish and responsive design improvements
 - Platform-specific testing and bug fixes
 - Code signing (if feasible without paid certificates)
+- Cross-platform verification (install + run on macOS, Windows, Linux)
 
 ### Out of Scope / Non-Goals
 
+- CI/CD pipeline for builds and quality gates (moved to M003)
+- Release build workflows (moved to M003)
+- Documentation (moved to M003)
 - New OCR features (engines, languages beyond what M001 ships)
 - Document management features
 - Cloud anything
 
+### Dependency
+
+- M003 must complete first — M002 depends on CI release builds from M003 to produce the installers that auto-update distributes
+
 ## Technical Constraints
 
-- Tauri bundler for installer generation
-- GitHub Actions (or similar) for CI/CD
-- Platform-specific code signing requirements
+- Tauri updater plugin for auto-update
+- Platform-specific code signing requirements (Apple Developer Program, Windows code signing certificate)
 
 ## Integration Points
 
-- **Tauri bundler** — generates platform-specific installers
-- **GitHub Releases** — likely distribution channel and auto-update source
-- **CI/CD** — GitHub Actions with macOS, Windows, Linux runners
+- **Tauri updater plugin** — checks for updates, downloads, installs
+- **GitHub Releases** — update distribution channel (release artifacts produced by M003 workflows)
+- **Platform-specific installers** — built by M003 release workflow, verified by M002
 
 ## Open Questions
 

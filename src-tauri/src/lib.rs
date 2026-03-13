@@ -3,7 +3,9 @@ mod sidecar;
 use serde_json::{json, Value};
 use std::sync::mpsc;
 use std::time::Duration;
+use tauri::ipc::Channel;
 use tauri::{Emitter, Listener, Manager};
+use uuid::Uuid;
 
 use crate::sidecar::SidecarState;
 
@@ -37,6 +39,128 @@ async fn greet_sidecar(app: tauri::AppHandle) -> Result<Value, String> {
     result
 }
 
+/// Tauri command: process files through the OCR sidecar with streaming progress.
+///
+/// Files are dispatched sequentially (PaddleOCR is single-threaded). Each file
+/// gets a UUID request ID. Progress events from the sidecar are streamed back
+/// through the Channel to the frontend in real-time.
+///
+/// Progress event shape: `{"type":"progress","id":"...","stage":"queued|initializing|processing|complete|error",...}`
+#[tauri::command]
+async fn process_files(
+    app: tauri::AppHandle,
+    paths: Vec<String>,
+    channel: Channel<Value>,
+) -> Result<(), String> {
+    eprintln!(
+        "[parsec] process_files called with {} path(s)",
+        paths.len()
+    );
+
+    for path in &paths {
+        let request_id = Uuid::new_v4().to_string();
+        eprintln!("[parsec] dispatching file path={path} id={request_id}");
+
+        // Check if sidecar is running before registering channel.
+        {
+            let state = app.state::<SidecarState>();
+            let guard = state.child.lock().unwrap();
+            if guard.is_none() {
+                eprintln!("[parsec] sidecar not running, sending error for id={request_id}");
+                let error_event = json!({
+                    "type": "progress",
+                    "id": request_id,
+                    "stage": "error",
+                    "error": "Sidecar is not running",
+                    "input_path": path,
+                });
+                let _ = channel.send(error_event);
+                continue;
+            }
+        }
+
+        // Register progress channel for this request ID.
+        let state = app.state::<SidecarState>();
+        let mut rx = state.register_channel(request_id.clone());
+
+        // Send the process_file command to sidecar.
+        let cmd = json!({
+            "cmd": "process_file",
+            "id": request_id,
+            "input_path": path,
+        });
+
+        if let Err(e) = sidecar::send_command(&app, &cmd) {
+            eprintln!("[parsec] failed to send command for id={request_id}: {e}");
+            state.unregister_channel(&request_id);
+            let error_event = json!({
+                "type": "progress",
+                "id": request_id,
+                "stage": "error",
+                "error": format!("Failed to send command to sidecar: {e}"),
+                "input_path": path,
+            });
+            let _ = channel.send(error_event);
+            continue;
+        }
+
+        // Read progress events from the per-request channel and forward to the
+        // frontend Channel. Stop when we see a terminal stage (complete or error).
+        loop {
+            match rx.recv().await {
+                Some(event) => {
+                    let stage = event
+                        .get("stage")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_owned();
+
+                    eprintln!(
+                        "[parsec] forwarding progress id={request_id} stage={stage}"
+                    );
+
+                    // Inject input_path so the frontend can correlate
+                    // events to files (sidecar events only carry the id).
+                    let mut enriched = event;
+                    if let Value::Object(ref mut map) = enriched {
+                        map.entry("input_path")
+                            .or_insert_with(|| Value::String(path.clone()));
+                    }
+                    let _ = channel.send(enriched);
+
+                    // Terminal stages — stop listening for this file.
+                    if stage == "complete" || stage == "error" {
+                        eprintln!("[parsec] file {stage} id={request_id}");
+                        break;
+                    }
+                }
+                None => {
+                    // Channel closed (sidecar died or channel dropped).
+                    eprintln!(
+                        "[parsec] progress channel closed unexpectedly for id={request_id}"
+                    );
+                    let error_event = json!({
+                        "type": "progress",
+                        "id": request_id,
+                        "stage": "error",
+                        "error": "Progress channel closed unexpectedly (sidecar may have crashed)",
+                        "input_path": path,
+                    });
+                    let _ = channel.send(error_event);
+                    break;
+                }
+            }
+        }
+
+        // Clean up the channel registration.
+        let state = app.state::<SidecarState>();
+        state.unregister_channel(&request_id);
+    }
+
+    eprintln!("[parsec] process_files complete");
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -53,7 +177,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet_sidecar])
+        .invoke_handler(tauri::generate_handler![greet_sidecar, process_files])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
                 sidecar::kill_sidecar(&window.app_handle());

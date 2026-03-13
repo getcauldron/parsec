@@ -6,25 +6,65 @@
 //! Lifecycle:
 //! - `spawn_sidecar()` — called during app setup, stores the `CommandChild`.
 //! - `send_command()` — writes a JSON line to stdin, returns immediately.
-//! - Stdout events are parsed and forwarded to the frontend via Tauri events.
+//! - Stdout events are parsed and routed:
+//!   - `{"type":"progress","id":"..."}` → per-request channel if registered
+//!   - Everything else → global `sidecar-response` Tauri event
 //! - `kill_sidecar()` — called on app exit to clean up the child process.
 
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
+use tokio::sync::mpsc;
 
-/// Managed state holding the sidecar child process.
+/// Managed state holding the sidecar child process and progress channel registry.
 pub struct SidecarState {
     pub child: Mutex<Option<CommandChild>>,
+    /// Maps request IDs to per-file progress channels.
+    /// When a stdout JSON message has `type: "progress"` and a matching `id`,
+    /// it's forwarded through the registered sender instead of the global event.
+    progress_channels: Mutex<HashMap<String, mpsc::UnboundedSender<Value>>>,
 }
 
 impl SidecarState {
     pub fn new() -> Self {
         Self {
             child: Mutex::new(None),
+            progress_channels: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// Register a progress channel for a request ID.
+    /// Returns the receiving end. Caller is responsible for unregistering when done.
+    pub fn register_channel(&self, id: String) -> mpsc::UnboundedReceiver<Value> {
+        let (tx, rx) = mpsc::unbounded_channel();
+        let mut channels = self.progress_channels.lock().unwrap();
+        channels.insert(id.clone(), tx);
+        eprintln!("[parsec] registered progress channel for id={id}");
+        rx
+    }
+
+    /// Unregister and drop the progress channel for a request ID.
+    pub fn unregister_channel(&self, id: &str) {
+        let mut channels = self.progress_channels.lock().unwrap();
+        channels.remove(id);
+        eprintln!("[parsec] unregistered progress channel for id={id}");
+    }
+
+    /// Try to route a progress event to a registered channel.
+    /// Returns `true` if the event was routed, `false` if no channel was registered.
+    fn try_route_progress(&self, id: &str, event: Value) -> bool {
+        let channels = self.progress_channels.lock().unwrap();
+        if let Some(tx) = channels.get(id) {
+            if tx.send(event).is_err() {
+                eprintln!("[parsec] progress channel for id={id} dropped (receiver gone)");
+            }
+            true
+        } else {
+            false
         }
     }
 }
@@ -75,6 +115,26 @@ pub fn spawn_sidecar(app: &AppHandle) -> Result<(), String> {
 
                     match serde_json::from_str::<Value>(line) {
                         Ok(json) => {
+                            // Route progress events to per-request channels.
+                            let is_progress = json.get("type").and_then(|v| v.as_str())
+                                == Some("progress");
+
+                            if is_progress {
+                                if let Some(id) = json.get("id").and_then(|v| v.as_str()) {
+                                    let state = app_handle.state::<SidecarState>();
+                                    if state.try_route_progress(id, json.clone()) {
+                                        eprintln!(
+                                            "[parsec] routed progress for id={id} stage={}",
+                                            json.get("stage")
+                                                .and_then(|v| v.as_str())
+                                                .unwrap_or("?")
+                                        );
+                                        continue; // Don't also emit as global event
+                                    }
+                                }
+                            }
+
+                            // Non-progress or unregistered progress → global event
                             let _ = app_handle.emit("sidecar-response", json);
                         }
                         Err(e) => {

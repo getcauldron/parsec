@@ -27,4 +27,5 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 ## Milestone Sequence
 
 - [ ] M001: Core App — OCR backend + Tauri desktop frontend, fully working end-to-end
-- [ ] M002: Distribution & Polish — Cross-platform installers, auto-updates, UX refinements
+- [ ] M003: Documentation & CI — CI quality gates, release builds, docs site, repo hygiene
+- [ ] M002: Distribution & Polish — Auto-updates, UX refinements, code signing, cross-platform verification

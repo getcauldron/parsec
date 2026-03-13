@@ -162,3 +162,132 @@ def test_logging_goes_to_stderr():
     # stderr should have log output (at minimum the startup and shutdown messages)
     assert result.stderr.strip(), "Expected log output on stderr"
     assert "Sidecar started" in result.stderr or "sidecar" in result.stderr.lower()
+
+
+# ─── process_file tests ───────────────────────────────────────────────────
+
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+
+def test_process_file_happy_path(tmp_path):
+    """process_file with a real fixture image emits progress events and produces a PDF."""
+    # Copy fixture to tmp_path so output lands somewhere clean
+    import shutil
+
+    src = FIXTURES_DIR / "clean_01.png"
+    input_file = tmp_path / "clean_01.png"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "happy-1",
+        "input_path": str(input_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=120.0)
+
+    # Should get at least: queued, initializing (first file), processing, complete
+    stages = [r.get("stage") for r in responses if r.get("type") == "progress"]
+    assert "queued" in stages, f"Expected 'queued' stage, got stages: {stages}"
+    assert "processing" in stages, f"Expected 'processing' stage, got stages: {stages}"
+    assert "complete" in stages, f"Expected 'complete' stage, got stages: {stages}"
+
+    # Verify the complete event has output_path and duration
+    complete_event = next(r for r in responses if r.get("stage") == "complete")
+    assert "output_path" in complete_event
+    assert "duration" in complete_event
+    assert complete_event["duration"] > 0
+
+    # Verify PDF was actually created
+    output_pdf = Path(complete_event["output_path"])
+    assert output_pdf.exists(), f"Expected output PDF at {output_pdf}"
+    assert output_pdf.stat().st_size > 0
+
+
+def test_process_file_missing_file():
+    """process_file with a nonexistent path emits an error stage."""
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "missing-1",
+        "input_path": "/nonexistent/path/ghost.png",
+    })
+
+    responses = _run_sidecar([cmd], timeout=30.0)
+
+    # Should get progress events ending with error (pipeline returns error for missing file)
+    progress = [r for r in responses if r.get("type") == "progress"]
+    assert len(progress) >= 1
+
+    last = progress[-1]
+    assert last["stage"] == "error"
+    assert last["id"] == "missing-1"
+    assert "error" in last
+
+
+def test_process_file_unsupported_extension(tmp_path):
+    """process_file with a .txt file emits immediate error — no queued/processing stages."""
+    txt_file = tmp_path / "readme.txt"
+    txt_file.write_text("not an image")
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "ext-1",
+        "input_path": str(txt_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=10.0)
+
+    # Should be a single error progress event (validation rejects before queuing)
+    progress = [r for r in responses if r.get("type") == "progress"]
+    assert len(progress) == 1
+    assert progress[0]["stage"] == "error"
+    assert progress[0]["id"] == "ext-1"
+    assert "Unsupported file extension" in progress[0]["error"]
+
+
+def test_process_file_id_correlation(tmp_path):
+    """All progress events carry the same id from the request."""
+    import shutil
+
+    src = FIXTURES_DIR / "clean_01.png"
+    input_file = tmp_path / "corr_test.png"
+    shutil.copy2(src, input_file)
+
+    test_id = "correlation-test-42"
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": test_id,
+        "input_path": str(input_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=120.0)
+
+    progress = [r for r in responses if r.get("type") == "progress"]
+    assert len(progress) >= 3, f"Expected at least 3 progress events, got {len(progress)}"
+
+    for event in progress:
+        assert event["id"] == test_id, f"Expected id={test_id}, got id={event.get('id')} in event: {event}"
+
+
+def test_process_file_output_path(tmp_path):
+    """Output file is named correctly: scan.png → scan_ocr.pdf."""
+    import shutil
+
+    src = FIXTURES_DIR / "clean_01.png"
+    input_file = tmp_path / "scan.png"
+    shutil.copy2(src, input_file)
+
+    cmd = json.dumps({
+        "cmd": "process_file",
+        "id": "path-1",
+        "input_path": str(input_file),
+    })
+
+    responses = _run_sidecar([cmd], timeout=120.0)
+
+    complete = [r for r in responses if r.get("stage") == "complete"]
+    assert len(complete) == 1
+
+    output_path = Path(complete[0]["output_path"])
+    assert output_path.name == "scan_ocr.pdf"
+    assert output_path.parent == tmp_path

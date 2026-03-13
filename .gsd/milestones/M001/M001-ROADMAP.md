@@ -63,7 +63,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Tauri Shell + Python Sidecar** `risk:high` `depends:[S01]`
   > After this: launching the Tauri app spawns the Python sidecar, and a hello-world JSON exchange proves bidirectional communication.
 
-- [ ] **S03: Drop-and-Go Pipeline** `risk:medium` `depends:[S01,S02]`
+- [x] **S03: Drop-and-Go Pipeline** `risk:medium` `depends:[S01,S02]`
   > After this: dropping an image file onto the app window shows progress and produces a searchable PDF next to the original.
 
 - [ ] **S04: Multi-Language & Settings** `risk:low` `depends:[S03]`

@@ -1,116 +1,458 @@
+/* ============================================================
+   Parsec — Industrial utility aesthetic
+   Dark ground, warm amber working states, green completion,
+   monospace filenames. A control panel, not a marketing page.
+   ============================================================ */
+
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+  /* Ground */
+  --bg-primary: #1a1a1e;
+  --bg-secondary: #222226;
+  --bg-elevated: #2a2a2f;
+  --bg-card: #252529;
+  --border: #333338;
+  --border-subtle: #2a2a2f;
+
+  /* Text */
+  --text-primary: #e8e6e3;
+  --text-secondary: #9a9790;
+  --text-muted: #6b675f;
+
+  /* Accents */
+  --amber: #d4a04a;
+  --amber-dim: #a07830;
+  --amber-glow: rgba(212, 160, 74, 0.12);
+  --green: #5cb85c;
+  --green-dim: #3a7a3a;
+  --green-glow: rgba(92, 184, 92, 0.10);
+  --red: #d45050;
+  --red-dim: #8b3333;
+  --red-glow: rgba(212, 80, 80, 0.10);
+
+  /* Type */
+  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "DM Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+
+  /* Spacing */
+  --radius: 6px;
+  --radius-lg: 10px;
+}
+
+/* ---- Reset & Base ---- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
 }
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
-button {
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+/* ---- Header ---- */
+
+#app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+  /* Draggable title bar area */
+  -webkit-app-region: drag;
+}
+
+#app-header * {
+  -webkit-app-region: no-drag;
+}
+
+.header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.app-title {
+  font-family: var(--font-mono);
+  font-size: 15px;
   font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #fff;
-  transition: border-color 0.2s, background-color 0.2s;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  text-transform: uppercase;
 }
 
-button:hover:not(:disabled) {
-  border-color: #396cd8;
-  background-color: #e8f0fe;
+.app-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* Sidecar status indicator */
+
+.sidecar-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
-pre {
-  text-align: left;
-  margin: 1rem auto;
-  padding: 1rem;
-  background: #1e1e1e;
-  color: #d4d4d4;
-  border-radius: 6px;
-  font-size: 0.9em;
-  overflow-x: auto;
-  min-height: 2em;
-  max-width: 500px;
+.indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background-color 0.3s ease;
 }
 
-pre:empty {
+.sidecar-indicator[data-state="connecting"] .indicator-dot {
+  background: var(--amber);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.sidecar-indicator[data-state="connected"] .indicator-dot {
+  background: var(--green);
+}
+
+.sidecar-indicator[data-state="connected"] .indicator-label {
+  color: var(--green-dim);
+}
+
+.sidecar-indicator[data-state="disconnected"] .indicator-dot,
+.sidecar-indicator[data-state="error"] .indicator-dot {
+  background: var(--red);
+}
+
+.sidecar-indicator[data-state="disconnected"] .indicator-label,
+.sidecar-indicator[data-state="error"] .indicator-label {
+  color: var(--red-dim);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ---- Main area ---- */
+
+#main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Drop Zone ---- */
+
+.drop-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  transition: all 0.25s ease;
+  cursor: default;
+  position: relative;
+  min-height: 160px;
+}
+
+.drop-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.008) 10px,
+    rgba(255, 255, 255, 0.008) 20px
+  );
+  pointer-events: none;
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.drop-icon {
+  color: var(--text-muted);
+  opacity: 0.6;
+  transition: all 0.25s ease;
+}
+
+.drop-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.25s ease;
+}
+
+.drop-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+/* Active drag-over state */
+.drop-zone--active {
+  border-color: var(--amber);
+  background: var(--amber-glow);
+  border-style: solid;
+}
+
+.drop-zone--active .drop-icon {
+  color: var(--amber);
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.drop-zone--active .drop-label {
+  color: var(--amber);
+}
+
+/* Compact mode — when files exist, shrink the drop zone */
+.drop-zone--compact {
+  flex: 0;
+  min-height: 72px;
+  margin-bottom: 0;
+}
+
+.drop-zone--compact .drop-icon {
   display: none;
 }
 
-.status {
-  font-size: 0.9em;
-  margin-bottom: 1rem;
+.drop-zone--compact .drop-label {
+  font-size: 13px;
 }
 
-.status-connected {
-  color: #2e7d32;
+.drop-zone--compact .drop-hint {
+  display: none;
 }
 
-.status-disconnected,
-.status-error {
-  color: #c62828;
+/* ---- File List ---- */
+
+.file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.status-connecting {
-  color: #f57c00;
+.file-list:empty {
+  display: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
+/* Subtle scrollbar */
+.file-list::-webkit-scrollbar {
+  width: 6px;
+}
 
-  button {
-    background-color: #444;
-    border-color: #666;
-    color: #f6f6f6;
-  }
+.file-list::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  button:hover:not(:disabled) {
-    border-color: #396cd8;
-    background-color: #555;
-  }
+.file-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
 
-  .status-connected {
-    color: #66bb6a;
-  }
+/* ---- File Card ---- */
 
-  .status-disconnected,
-  .status-error {
-    color: #ef5350;
-  }
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  animation: card-enter 0.2s ease-out;
+}
 
-  .status-connecting {
-    color: #ffa726;
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-card-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.file-card-name {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-card-output {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--green-dim);
+}
+
+.file-card-duration {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* --- Card stage states --- */
+
+/* Queued — muted, waiting */
+.file-card--queued {
+  border-color: var(--border-subtle);
+}
+
+.file-card--queued .file-card-icon {
+  color: var(--text-muted);
+}
+
+/* Initializing — warm amber, spinner */
+.file-card--initializing {
+  border-color: var(--amber-dim);
+  background: var(--amber-glow);
+}
+
+.file-card--initializing .file-card-icon {
+  color: var(--amber);
+}
+
+.file-card--initializing .file-card-status {
+  color: var(--amber-dim);
+}
+
+/* Processing — amber, active */
+.file-card--processing {
+  border-color: var(--amber-dim);
+  background: var(--amber-glow);
+}
+
+.file-card--processing .file-card-icon {
+  color: var(--amber);
+}
+
+.file-card--processing .file-card-status {
+  color: var(--amber-dim);
+}
+
+/* Complete — green, settled */
+.file-card--complete {
+  border-color: var(--green-dim);
+  background: var(--green-glow);
+}
+
+.file-card--complete .file-card-icon {
+  color: var(--green);
+}
+
+.file-card--complete .file-card-status {
+  color: var(--text-secondary);
+}
+
+/* Error — red, attention */
+.file-card--error {
+  border-color: var(--red-dim);
+  background: var(--red-glow);
+}
+
+.file-card--error .file-card-icon {
+  color: var(--red);
+}
+
+.file-card--error .file-card-status {
+  color: var(--red);
+}
+
+/* Rejected — red, same as error */
+.file-card--rejected {
+  border-color: var(--red-dim);
+  background: var(--red-glow);
+}
+
+.file-card--rejected .file-card-icon {
+  color: var(--red);
+}
+
+.file-card--rejected .file-card-status {
+  color: var(--red);
+}
+
+/* --- Spinner animation --- */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }

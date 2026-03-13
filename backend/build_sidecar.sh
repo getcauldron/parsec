@@ -57,6 +57,9 @@ $VENV_PYTHON -m PyInstaller \
   --hidden-import parsec.engine \
   --hidden-import parsec.models \
   --hidden-import parsec.pipeline \
+  --hidden-import ocrmypdf_paddleocr \
+  --collect-all ocrmypdf_paddleocr \
+  --collect-all ocrmypdf \
   parsec/sidecar_entry.py
 
 echo ""

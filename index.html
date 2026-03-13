@@ -2,16 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Parsec</title>
   </head>
   <body>
     <div id="app">
-      <h1>Parsec</h1>
-      <p id="status" class="status">Connecting to sidecar...</p>
-      <button id="greet-btn" disabled>Hello Sidecar</button>
-      <pre id="response"></pre>
+      <header id="app-header">
+        <div class="header-left">
+          <h1 class="app-title">Parsec</h1>
+          <span class="app-subtitle">image → searchable pdf</span>
+        </div>
+        <div id="sidecar-status" class="sidecar-indicator" data-state="connecting">
+          <span class="indicator-dot"></span>
+          <span class="indicator-label">Connecting...</span>
+        </div>
+      </header>
+
+      <main id="main-area">
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-zone-content">
+            <div class="drop-icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/>
+                <path d="M24 20v12M18 26l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p class="drop-label">Drop images here to process</p>
+            <p class="drop-hint">.png .jpg .jpeg .tiff .tif</p>
+          </div>
+        </div>
+
+        <div id="file-list" class="file-list"></div>
+      </main>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

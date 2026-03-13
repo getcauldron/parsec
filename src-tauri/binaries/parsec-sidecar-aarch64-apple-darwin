@@ -14,7 +14,7 @@ PROJECT_ROOT="$SCRIPT_DIR"
 
 # Walk up to find the project root (where backend/ lives).
 for _ in 1 2 3 4 5; do
-  if [ -d "$PROJECT_ROOT/backend/dist/parsec-sidecar" ]; then
+  if [ -d "$PROJECT_ROOT/backend" ]; then
     break
   fi
   PROJECT_ROOT="$(dirname "$PROJECT_ROOT")"

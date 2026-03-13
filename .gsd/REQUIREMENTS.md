@@ -141,9 +141,9 @@
 - Why it matters: Non-technical users can't pip install — needs to be download-and-double-click
 - Source: user
 - Primary owning slice: M002/S01
-- Supporting slices: none
+- Supporting slices: M003 (release build workflow produces the artifacts)
 - Validation: unmapped
-- Notes: Tauri bundler handles this; Python sidecar bundled via PyInstaller
+- Notes: Tauri bundler handles this; Python sidecar bundled via PyInstaller. M003 builds the CI workflow; M002 wires up auto-updates and verifies installs.
 
 ### R014 — Settings panel for power users
 - Class: differentiator
@@ -185,9 +185,9 @@
 - Why it matters: Catches OCR quality regressions when engine versions or preprocessing changes
 - Source: user
 - Primary owning slice: M001/S01
-- Supporting slices: M001/S06
+- Supporting slices: M001/S06, M003 (CI workflow runs benchmarks on merge to main)
 - Validation: unmapped
-- Notes: Fixtures cover clean prints, skewed scans, multi-column, non-English text
+- Notes: Fixtures cover clean prints, skewed scans, multi-column, non-English text. M001 creates the tests; M003 wires them into CI.
 
 ## Validated
 
@@ -290,11 +290,11 @@
 | R010 | launchability | active | M001/S02 | M002/S01 | unmapped |
 | R011 | primary-user-loop | active | M001/S03 | none | unmapped |
 | R012 | quality-attribute | active | M001/S01 | none | unmapped |
-| R013 | launchability | active | M002/S01 | none | unmapped |
+| R013 | launchability | active | M002/S01 | M003 | unmapped |
 | R014 | differentiator | active | M001/S04 | none | unmapped |
 | R015 | failure-visibility | active | M001/S03 | none | unmapped |
 | R016 | quality-attribute | active | M001/S01 | none | unmapped |
-| R024 | quality-attribute | active | M001/S01 | M001/S06 | unmapped |
+| R024 | quality-attribute | active | M001/S01 | M001/S06, M003 | unmapped |
 | R017 | core-capability | deferred | none | none | unmapped |
 | R018 | differentiator | deferred | none | none | unmapped |
 | R019 | core-capability | deferred | none | none | unmapped |
